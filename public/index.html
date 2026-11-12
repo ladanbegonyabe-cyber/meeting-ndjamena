@@ -4,46 +4,62 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Meeting University of N'djamena</title>
-  <link rel="manifest" href="/manifest.json">
+<link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#1d4ed8">
 <link rel="icon" href="/icon-192.png">
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}</script>
 <style>
-:root{--bg:#f4f6f8;--card:#fff;--tx:#1b2430;--mu:#6b7785;--pr:#0a7d4f;--bd:#dfe4ea}
-@media(prefers-color-scheme:dark){:root{--bg:#10151b;--card:#1a212a;--tx:#e8edf2;--mu:#97a3b0;--pr:#2bb07a;--bd:#2a333e}}
+:root{--bg:#f3f6fb;--card:#fff;--tx:#17202e;--mu:#667487;--pr:#1d4ed8;--bd:#dbe3ee;--ok:#0e9f6e;--red:#e11d48}
+@media(prefers-color-scheme:dark){:root{--bg:#0d121a;--card:#171e29;--tx:#e8edf3;--mu:#95a2b3;--pr:#3b82f6;--bd:#283241;--ok:#2dd4a0}}
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:var(--bg);color:var(--tx)}
 .wrap{max-width:640px;margin:0 auto;padding:12px}
-header{background:var(--pr);color:#fff;padding:12px;text-align:center;font-weight:700}
+header{background:linear-gradient(135deg,#1d4ed8,#0e9f6e);color:#fff;padding:12px;display:flex;align-items:center;justify-content:center;gap:10px;font-weight:700}
 nav{display:flex;gap:6px;margin:10px 0}nav button{flex:1}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:10px}
 input,textarea,select{width:100%;padding:10px;margin:4px 0;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
 button{padding:10px 14px;border:0;border-radius:8px;background:var(--pr);color:#fff;font:inherit;cursor:pointer}
+button:disabled{opacity:.6}
 button.alt{background:var(--card);color:var(--tx);border:1px solid var(--bd)}button.on{background:var(--pr);color:#fff}
 .row{display:flex;gap:10px;align-items:center}.mu{color:var(--mu);font-size:.85em}
 .av{width:40px;height:40px;border-radius:50%;object-fit:cover;background:var(--pr);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none}
-.media{max-width:100%;border-radius:8px;margin-top:8px}.err{color:#d33}
+.av.big{width:88px;height:88px;font-size:2em}
+.media{max-width:100%;border-radius:8px;margin-top:8px}.err{color:var(--red)}.okm{color:var(--ok)}
 .chat{height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:6px}
 .b{max-width:80%;padding:8px 12px;border-radius:14px;background:var(--bg)}.b.me{align-self:flex-end;background:var(--pr);color:#fff}
 .u{cursor:pointer}
+.bd{background:var(--red);color:#fff;border-radius:99px;padding:1px 7px;font-size:.8em;margin-left:4px;display:none}
+.cm .t{margin-top:6px}
 </style>
 </head>
 <body>
-<header>Meeting University of N'djamena</header>
+<header>
+  <svg width="30" height="30" viewBox="0 0 48 48"><rect width="48" height="48" rx="11" fill="#fff"/><text x="24" y="33" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-style="italic" font-size="24" fill="#1d4ed8">MU</text></svg>
+  <span>Meeting University of N'djamena</span>
+</header>
 <div class="wrap" id="app"></div>
 <script>
 const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let tok=localStorage.getItem('t'),me=null,tab='feed',peer=null,timer=null,reg=false;
+let tok=localStorage.getItem('t'),me=null,tab='feed',peer=null,timer=null,poll=null,reg=false,lastN=0;
 const $=s=>document.querySelector(s),app=$('#app');
 async function api(p,o={}){
   o.headers={...(o.headers||{}),Authorization:'Bearer '+tok};
   if(o.body&&!(o.body instanceof FormData)){o.headers['Content-Type']='application/json';o.body=JSON.stringify(o.body)}
   const r=await fetch('/api'+p,o),d=await r.json().catch(()=>({}));
   if(!r.ok)throw new Error(d.error||'Erreur');return d}
-const av=u=>u.avatar?`<img class="av" src="${E(u.avatar)}">`:`<div class="av">${E((u.name||'?')[0])}</div>`;
+const av=(u,big)=>u.avatar?`<img class="av ${big?'big':''}" src="${E(u.avatar)}">`:`<div class="av ${big?'big':''}">${E((u.name||'?')[0])}</div>`;
 const fmt=t=>new Date(t).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});
 
+function setBadge(n){const b=$('#bd');if(b){b.textContent=n;b.style.display=n?'inline-block':'none'}
+  document.title=(n?`(${n}) `:'')+"Meeting University of N'djamena"}
+function notify(m){try{if(Notification.permission!=='granted')return;
+  navigator.serviceWorker.ready.then(r=>r.showNotification(m.name,{body:m.text,icon:'/icon-192.png',tag:'msg'}))}catch{}}
+function startPoll(){clearInterval(poll);
+  const t=async()=>{try{const d=await api('/unread');setBadge(d.n);
+    if(d.n>lastN&&d.last&&!(tab=='ib'&&peer))notify(d.last);lastN=d.n}catch{}};
+  t();poll=setInterval(t,5000)}
+
 function authView(){
-  clearInterval(timer);
+  clearInterval(timer);clearInterval(poll);setBadge(0);
   app.innerHTML=`<div class="card"><h3>${reg?'Créer mon compte':'Connexion'}</h3>
   <form id="f">
   ${reg?`<input name="name" placeholder="Nom complet" required>`:''}
@@ -57,39 +73,72 @@ function authView(){
   <p class="err" id="e"></p><button>${reg?'S\'inscrire':'Se connecter'}</button></form>
   <p class="mu u" id="sw">${reg?'Déjà un compte ? Se connecter':'Pas de compte ? S\'inscrire'}</p></div>`;
   $('#sw').onclick=()=>{reg=!reg;authView()};
-  $('#f').onsubmit=async e=>{e.preventDefault();
+  $('#f').onsubmit=async e=>{e.preventDefault();const btn=e.target.querySelector('button');btn.disabled=true;
     try{const fd=new FormData(e.target);
       const d=await api(reg?'/register':'/login',{method:'POST',body:reg?fd:Object.fromEntries(fd)});
-      tok=d.token;me=d.me;localStorage.setItem('t',tok);main()}catch(x){$('#e').textContent=x.message}}}
+      tok=d.token;me=d.me;localStorage.setItem('t',tok);main()}catch(x){$('#e').textContent=x.message;btn.disabled=false}}}
 
 function main(){
-  app.innerHTML=`<nav>${[['feed','Fil'],['ib','Messages IB'],['me','Profil']].map(([k,l])=>`<button class="${tab==k?'on':'alt'}" data-t="${k}">${l}</button>`).join('')}</nav><div id="v"></div>`;
-  app.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;peer=null;main()});
-  clearInterval(timer);
+  app.innerHTML=`<nav>${[['feed','Fil'],['ib','Messages IB'],['me','Profil']].map(([k,l])=>
+    `<button class="${tab==k?'on':'alt'}" data-t="${k}">${l}${k=='ib'?'<span class="bd" id="bd"></span>':''}</button>`).join('')}</nav><div id="v"></div>`;
+  app.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+    if('Notification' in window&&Notification.permission==='default')Notification.requestPermission();
+    tab=b.dataset.t;peer=null;main()});
+  clearInterval(timer);startPoll();
   ({feed:feedView,ib:ibView,me:profView})[tab]()}
+
+app.onclick=async e=>{
+  const g=a=>e.target.closest('['+a+']');let x;
+  try{
+    if(x=g('data-d')){await api('/posts/'+x.dataset.d,{method:'DELETE'});$('#p'+x.dataset.d).remove()}
+    else if(x=g('data-l')){const d=await api('/posts/'+x.dataset.l+'/like',{method:'POST'});x.innerHTML=(d.liked?'❤️':'🤍')+' '+d.n}
+    else if(x=g('data-c')){openCm(x.dataset.c)}
+    else if(x=g('data-cs')){const id=x.dataset.cs,v=$('#ci'+id).value.trim();if(!v)return;
+      await api('/posts/'+id+'/comments',{method:'POST',body:{text:v}});$('#cm'+id).innerHTML='';openCm(id)}
+    else if(x=g('data-p')){userView(x.dataset.p)}
+  }catch(err){alert(err.message)}};
+
+async function openCm(id){
+  const c=$('#cm'+id);if(c.innerHTML){c.innerHTML='';return}
+  const cs=await api('/posts/'+id+'/comments'),b=document.querySelector('[data-c="'+id+'"]');
+  if(b)b.textContent='💬 '+cs.length;
+  c.innerHTML=cs.map(m=>`<div class="t"><b class="u" data-p="${m.uid}">${E(m.name)}</b> ${E(m.text)} <span class="mu">${fmt(m.ts)}</span></div>`).join('')+
+    `<div class="row"><input id="ci${id}" placeholder="Votre commentaire…"><button data-cs="${id}">Envoyer</button></div>`}
+
+const postHtml=p=>`<div class="card" id="p${p.id}"><div class="row"><div class="row u" data-p="${p.uid}">${av(p)}<div><b>${E(p.name)}</b><div class="mu">${E(p.faculty)} · ${fmt(p.ts)}</div></div></div>
+  ${p.uid==me.id?`<button class="alt" style="margin-left:auto" data-d="${p.id}">Suppr.</button>`:''}</div>
+  <p>${E(p.text)}</p>${p.type=='image'?`<img class="media" src="${E(p.media)}">`:p.type=='video'?`<video class="media" controls src="${E(p.media)}"></video>`:''}
+  <div class="row" style="margin-top:8px"><button class="alt" data-l="${p.id}">${p.liked?'❤️':'🤍'} ${p.likes}</button><button class="alt" data-c="${p.id}">💬 ${p.ncom}</button></div>
+  <div class="cm" id="cm${p.id}"></div></div>`;
 
 async function feedView(){
   $('#v').innerHTML=`<div class="card"><textarea id="t" rows="2" placeholder="Quoi de neuf sur le campus ?"></textarea>
-  <input id="m" type="file" accept="image/*,video/*"><p class="err" id="e"></p><button id="go">Publier</button></div><div id="l"></div>`;
+  <input id="m" type="file" accept="image/*,video/*"><div id="pv"></div><p class="err" id="e"></p><button id="go">Publier</button></div>
+  <div id="l"></div><button class="alt" id="more" style="width:100%;display:none">Voir plus</button>`;
+  $('#m').onchange=e=>{const f=e.target.files[0];
+    $('#pv').innerHTML=!f?'':f.type.startsWith('video')?`<video class="media" controls src="${URL.createObjectURL(f)}"></video>`:`<img class="media" src="${URL.createObjectURL(f)}">`};
   $('#go').onclick=async()=>{const fd=new FormData();fd.append('text',$('#t').value);if($('#m').files[0])fd.append('media',$('#m').files[0]);
-    try{$('#go').disabled=true;await api('/posts',{method:'POST',body:fd});feedView()}catch(x){$('#e').textContent=x.message;$('#go').disabled=false}};
-  const ps=await api('/posts');
-  $('#l').innerHTML=ps.map(p=>`<div class="card"><div class="row">${av(p)}<div><b>${E(p.name)}</b><div class="mu">${E(p.faculty)} · ${fmt(p.ts)}</div></div>
-  ${p.uid==me.id?`<button class="alt" style="margin-left:auto" data-d="${p.id}">Suppr.</button>`:''}</div>
-  <p>${E(p.text)}</p>${p.type=='image'?`<img class="media" src="${E(p.media)}">`:p.type=='video'?`<video class="media" controls src="${E(p.media)}"></video>`:''}</div>`).join('')||'<p class="mu">Aucune publication.</p>';
-  app.querySelectorAll('[data-d]').forEach(b=>b.onclick=async()=>{await api('/posts/'+b.dataset.d,{method:'DELETE'});feedView()})}
+    try{$('#go').disabled=true;$('#go').textContent='Publication…';await api('/posts',{method:'POST',body:fd});feedView()}
+    catch(x){$('#e').textContent=x.message;$('#go').disabled=false;$('#go').textContent='Publier'}};
+  let before=0,first=true;
+  const load=async()=>{const ps=await api('/posts'+(before?'?before='+before:''));
+    if(first&&!ps.length)$('#l').innerHTML='<p class="mu">Aucune publication. Écris la première !</p>';
+    first=false;$('#l').insertAdjacentHTML('beforeend',ps.map(postHtml).join(''));
+    if(ps.length)before=ps[ps.length-1].ts;$('#more').style.display=ps.length==20?'block':'none'};
+  $('#more').onclick=load;load()}
 
 async function ibView(){
   if(peer)return chatView();
-  const us=await api('/users');
-  $('#v').innerHTML=`<input id="q" placeholder="Rechercher un étudiant…"><div id="l"></div>`;
-  const draw=()=>{const q=$('#q').value.toLowerCase();
-    $('#l').innerHTML=us.filter(u=>(u.name+u.faculty).toLowerCase().includes(q)).map(u=>`<div class="card row u" data-u="${u.id}">${av(u)}<div><b>${E(u.name)}</b><div class="mu">${E(u.faculty)} ${E(u.level)}</div>${u.bio?`<div class="mu">${E(u.bio)}</div>`:''}</div></div>`).join('')||'<p class="mu">Aucun étudiant.</p>';
-    app.querySelectorAll('[data-u]').forEach(c=>c.onclick=()=>{peer=us.find(u=>u.id==c.dataset.u);chatView()})};
-  $('#q').oninput=draw;draw()}
+  $('#v').innerHTML=`<input id="q" placeholder="Rechercher un étudiant (nom, filière)…"><div id="l"></div>`;
+  let tm;
+  const draw=async()=>{const us=await api('/users?q='+encodeURIComponent($('#q').value));
+    $('#l').innerHTML=us.map(u=>`<div class="card row u" data-u="${u.id}">${av(u)}<div style="flex:1"><b>${E(u.name)}</b><div class="mu">${E(u.faculty)} ${E(u.level)}</div></div>
+      ${u.unread?`<span class="bd" style="display:inline-block">${u.unread}</span>`:''}<button class="alt" data-p="${u.id}">Profil</button></div>`).join('')||'<p class="mu">Aucun étudiant trouvé.</p>';
+    app.querySelectorAll('[data-u]').forEach(c=>c.onclick=e=>{if(e.target.closest('[data-p]'))return;peer=us.find(u=>u.id==c.dataset.u);chatView()})};
+  $('#q').oninput=()=>{clearTimeout(tm);tm=setTimeout(draw,300)};draw()}
 
 function chatView(){
-  $('#v').innerHTML=`<div class="card"><div class="row"><button class="alt" id="bk">←</button>${av(peer)}<b>${E(peer.name)}</b></div>
+  $('#v').innerHTML=`<div class="card"><div class="row"><button class="alt" id="bk">←</button><div class="row u" data-p="${peer.id}">${av(peer)}<b>${E(peer.name)}</b></div></div>
   <div class="chat" id="c"></div><div class="row"><input id="m" placeholder="Votre message…"><button id="s">Envoyer</button></div></div>`;
   $('#bk').onclick=()=>{peer=null;clearInterval(timer);ibView()};
   const load=async()=>{const ms=await api('/msgs/'+peer.id),c=$('#c');if(!c)return;
@@ -100,6 +149,16 @@ function chatView(){
   $('#s').onclick=send;$('#m').onkeydown=e=>{if(e.key=='Enter')send()};
   load().then(()=>{$('#c').scrollTop=1e9});timer=setInterval(load,3000)}
 
+async function userView(id){
+  clearInterval(timer);
+  if(id==me.id){tab='me';peer=null;return main()}
+  const u=await api('/users/'+id);
+  $('#v').innerHTML=`<div class="card" style="text-align:center"><button class="alt" id="bk" style="float:left">←</button>
+  <div class="row" style="justify-content:center;margin:10px">${av(u,1)}</div><h3 style="margin:4px">${E(u.name)}</h3>
+  <p class="mu">${E(u.faculty)} ${E(u.level)}</p><p>${u.bio?E(u.bio):'<span class="mu">Pas encore de présentation.</span>'}</p>
+  <button id="dm">Envoyer un message</button></div>`;
+  $('#bk').onclick=()=>main();$('#dm').onclick=()=>{tab='ib';peer=u;main()}}
+
 function profView(){
   $('#v').innerHTML=`<div class="card"><div class="row">${av(me)}<div><b>${E(me.name)}</b><div class="mu">${E(me.email)}</div></div></div>
   <form id="f"><input name="name" value="${E(me.name)}" placeholder="Nom">
@@ -108,9 +167,16 @@ function profView(){
   <input name="phone" value="${E(me.phone)}" placeholder="Téléphone (privé)">
   <textarea name="bio" rows="3" placeholder="À propos de moi">${E(me.bio)}</textarea>
   <input name="avatar" type="file" accept="image/*"><p class="err" id="e"></p>
-  <button>Enregistrer</button> <button type="button" class="alt" id="out">Déconnexion</button></form></div>`;
+  <button>Enregistrer</button> <button type="button" class="alt" id="out">Déconnexion</button></form></div>
+  <div class="card"><b>Changer mon mot de passe</b>
+  <form id="pf"><input name="old" type="password" placeholder="Ancien mot de passe" required>
+  <input name="new" type="password" placeholder="Nouveau mot de passe (6 caractères min.)" required>
+  <p id="pe"></p><button>Changer le mot de passe</button></form></div>`;
   $('#f').onsubmit=async e=>{e.preventDefault();try{me=await api('/me',{method:'PUT',body:new FormData(e.target)});profView()}catch(x){$('#e').textContent=x.message}};
-  $('#out').onclick=()=>{localStorage.removeItem('t');tok=me=null;authView()}}
+  $('#pf').onsubmit=async e=>{e.preventDefault();const p=$('#pe');
+    try{await api('/password',{method:'POST',body:Object.fromEntries(new FormData(e.target))});e.target.reset();p.className='okm';p.textContent='Mot de passe modifié.'}
+    catch(x){p.className='err';p.textContent=x.message}};
+  $('#out').onclick=()=>{localStorage.removeItem('t');tok=me=null;lastN=0;authView()}}
 
 (async()=>{if(tok)try{me=await api('/me');return main()}catch{}authView()})();
 </script>
