@@ -128,7 +128,7 @@ users:(u,b)=>{const q=S(b.q,50).toLowerCase();return D.users.filter(x=>x.id!==u.
 user:(u,b)=>{const x=UB.get(S(b.id,40));return x?{...pub(x),posts:D.posts.reduce((a,p)=>a+(p.by===x.id?1:0),0)}:{e:'Introuvable'}},
 follow:(u,b)=>{const t=S(b.id,40);if(!UB.has(t)||t===u.id)return ok;const i=u.following.indexOf(t);i<0?u.following.push(t):u.following.splice(i,1);save();return ok},
 block:(u,b)=>{const t=S(b.id,40);if(UB.has(t)&&t!==u.id&&!u.blocked.includes(t)){u.blocked.push(t);const i=u.following.indexOf(t);if(i>=0)u.following.splice(i,1);save()}return ok},
-report:(u,b)=>{D.reports.push({by:u.id,at:Date.now(),id:S(b.id,40),type:S(b.type,40),why:S(b.why||b.reason||b.text,300)});save();return ok},
+report:(u,b)=>{D.reports.push({by:u.id,at:Date.now(),id:S(b.target||b.id,40),type:S(b.type,40),why:S(b.why||b.reason||b.text,300)});save();return ok},
 post:async(u,b)=>{
 const text=S(b.text,2000);if(!text.trim()&&!b.img)return{e:'Vide'};
 let img='';if(b.img){const m=await putMedia(b.img,'image',2e6);if(!m)return{e:'Image invalide ou trop lourde'};img='/m/'+m}
