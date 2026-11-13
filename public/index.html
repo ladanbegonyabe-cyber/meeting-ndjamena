@@ -46,6 +46,15 @@ nav button.on{color:#a78bff}
 .progress i{display:block;height:100%;background:#fff;width:0%}
 .topbar{display:flex;align-items:center;justify-content:space-between}
 .bookcover{width:56px;height:74px;border-radius:8px;background:var(--g);display:grid;place-items:center;font-size:28px;color:#fff;flex:none}
+.bell{position:relative;background:var(--card);border:1px solid var(--line);border-radius:50%;width:42px;height:42px;display:grid;place-items:center;cursor:pointer;font-size:20px}
+.bell i{position:absolute;top:-4px;right:-4px;background:#ff4d6d;color:#fff;font-size:11px;border-radius:10px;padding:1px 6px;font-style:normal}
+.cmt{display:flex;gap:8px;align-items:flex-start;margin:8px 0}
+.cmt .av{width:32px;height:32px;font-size:14px}
+.cmtbox{background:var(--bg);border-radius:14px;padding:8px 10px;flex:1}
+.exgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px}
+.exgrid div{aspect-ratio:1;background:var(--line);border-radius:8px;overflow:hidden;position:relative;cursor:pointer}
+.exgrid img{width:100%;height:100%;object-fit:cover}
+.exgrid span{position:absolute;bottom:4px;left:6px;background:#000a;color:#fff;font-size:12px;border-radius:8px;padding:1px 6px}
 </style>
 </head>
 <body>
@@ -56,7 +65,7 @@ window.onerror=function(m){try{var t=document.getElementById('toast');t.textCont
 var reg=false;
 const $=s=>document.querySelector(s);
 const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let tok=localStorage.t||'',me=null,view='home',F={type:'',group:'',saved:0},cur=null,un=0,eco=localStorage.eco!=='0',ptimer=null,pun=-1,rec=null,chunks=[],feedLimit=10,feedCache=[],storiesCache=[],libCat='Tout',libQ='';
+let tok=localStorage.t||'',me=null,view='home',F={type:'',group:'',saved:0},cur=null,un=0,eco=localStorage.eco!=='0',ptimer=null,pun=-1,rec=null,chunks=[],feedLimit=10,feedCache=[],storiesCache=[],libCat='Tout',libQ='',notifCount=0,exploreType='',expandedCm={};
 const api=async(n,b={})=>{try{const r=await fetch('/api/'+n,{method:'POST',headers:{'Content-Type':'application/json','x-token':tok},body:JSON.stringify(b)});if(r.status===401){localStorage.t=tok='';me=null;return{}}return await r.json()}catch(e){toast('Serveur en réveil, réessaie dans 30 sec');return{e:'Serveur en réveil'}}};
 const toast=m=>{const t=$('#toast');if(!t)return;t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2500)};
 const ago=t=>{const m=(Date.now()-t)/6e4|0;return m<1?"à l'instant":m<60?m+' min':m<1440?(m/60|0)+' h':(m/1440|0)+' j'};
@@ -65,7 +74,6 @@ const vb=v=>v?' <span class="vk">✓</span>':'';
 const IC={home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>',search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',new:'<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>',msg:'<path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12z"/>',me:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>',heart:'<path d="M12 20.5S3 15 3 9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6-9 11.5-9 11.5z"/>',bm:'<path d="M6 3h12v18l-6-4-6 4z"/>',flag:'<path d="M5 21V4h12l-2 4 2 4H5"/>',mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',send:'<path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4z"/>',back:'<path d="M15 5l-7 7 7 7"/>',stop:'<rect x="6" y="6" width="12" height="12" rx="2"/>',image:'<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/>',file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',x:'<path d="M6 6l12 12M18 6 6 18"/>',lib:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>'};
 const IE={home:'🏡',search:'🔎',new:'✨',lib:'📚',msg:'💬',me:'😎',heart:'🤍',bm:'📌',flag:'🚩',mic:'🎙️',send:'🚀',back:'⬅️',stop:'⏹️',image:'🖼️',file:'📄',x:'✖️'};
 function I(name,size,on){if(IC[name]) return `<svg width="${size||22}" height="${size||22}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="fill:${on?'currentColor':'none'}">${IC[name]}</svg>`;return `<span style="font-size:${size||22}px">${IE[name]||'•'}</span>`}
-// BIBLIOTHEQUE - livres en accès libre / légal
 const BOOKS=[
 {t:'Anatomie humaine - OpenStax',a:'OpenStax',d:'Médecine',e:'🩺',u:'https://openstax.org/details/books/anatomy-and-physiology-2e',desc:'Anatomie et physiologie complète, gratuit.'},
 {t:'Biologie - OpenStax',a:'OpenStax',d:'Médecine',e:'🧬',u:'https://openstax.org/details/books/biology-2e',desc:'Biologie générale, cellules, génétique.'},
@@ -75,7 +83,7 @@ const BOOKS=[
 {t:'Algèbre linéaire',a:'OpenStax',d:'Mathématiques',e:'🔢',u:'https://openstax.org/details/books/introductory-statistics',desc:'Statistiques et probabilités.'},
 {t:'Introduction à la programmation Python',a:'OpenStax / Python',d:'Informatique',e:'🐍',u:'https://openstax.org/details/books/introduction-python-programming',desc:'Apprendre Python de zéro.'},
 {t:'Introduction à l’informatique',a:'CS50 / Harvard',d:'Informatique',e:'💻',u:'https://cs50.harvard.edu/x/',desc:'Cours CS50, bases de l’informatique.'},
-{t:'Réseaux informatiques',a:'Kurose & Ross - extraits',d:'Informatique',e:'🌐',u:'https://gaia.cs.umass.edu/kurose_ross/',desc:'Réseaux, internet, protocoles.'},
+{t:'Réseaux informatiques',a:'Kurose & Ross',d:'Informatique',e:'🌐',u:'https://gaia.cs.umass.edu/kurose_ross/',desc:'Réseaux, internet, protocoles.'},
 {t:'Économie - Principes',a:'OpenStax',d:'Économie',e:'💰',u:'https://openstax.org/details/books/principles-economics-3e',desc:'Micro et macro-économie.'},
 {t:'Comptabilité / Gestion',a:'OpenStax',d:'Économie',e:'📊',u:'https://openstax.org/details/books/principles-financial-accounting',desc:'Comptabilité financière.'},
 {t:'Droit constitutionnel - Cours',a:'Gallica / BnF',d:'Droit',e:'⚖️',u:'https://gallica.bnf.fr/',desc:'Chercher : droit constitutionnel, textes et cours sur Gallica.'},
@@ -91,35 +99,36 @@ const BOOKS=[
 function libView(){
   const cats=['Tout','Médecine','Informatique','Droit','Sciences','Mathématiques','Économie','Lettres','Anglais','Histoire','Philosophie','Général'];
   const list=BOOKS.filter(b=>(libCat==='Tout'||b.d===libCat)&&(!libQ||(b.t+b.a+b.d).toLowerCase().includes(libQ.toLowerCase())));
-  return `<div class="topbar"><h2>📚 Bibliothèque</h2><button class="ghost" onclick="toggleTheme()">🌙</button></div><p class="mut">Livres gratuits et légaux pour toutes les filières. Appuie sur Ouvrir.</p>
-  <input placeholder="🔎 Chercher un livre, un auteur, un domaine…" value="${E(libQ)}" oninput="libQ=this.value;render()">
+  return `<div class="topbar"><h2>📚 Bibliothèque</h2><div class="row"><button class="bell" onclick="go('notifs')">🔔${notifCount?`<i>${notifCount}</i>`:''}</button><button class="ghost" onclick="toggleTheme()">🌙</button></div></div><p class="mut">Livres gratuits et légaux pour toutes les filières.</p>
+  <input placeholder="🔎 Chercher un livre…" value="${E(libQ)}" oninput="libQ=this.value;render()">
   <div class="chips">${cats.map(c=>`<button class="${libCat===c?'on':''}" onclick="libCat='${c}';render()">${c}</button>`).join('')}</div>
-  ${list.map(b=>`<div class="card row" style="align-items:flex-start"><div class="bookcover">${b.e}</div><div class="sp"><b>${E(b.t)}</b><div class="mut">${E(b.a)} · ${E(b.d)}</div><p style="font-size:14px;margin-top:4px">${E(b.desc)}</p><div class="row" style="margin-top:8px"><a class="btn" href="${b.u}" target="_blank" rel="noopener" style="text-decoration:none;padding:8px 14px;font-size:14px">📖 Ouvrir le livre</a><button class="ghost" onclick="go('msg')">💬 Demander en groupe</button></div></div></div>`).join('')||'<p class="mut card">Aucun livre trouvé pour ce filtre.</p>'}
-  <p class="mut card">💡 Astuce : tu peux aussi publier un cours / PDF dans Accueil > Publier > Cours / PDF, il apparaîtra pour ta filière.</p>`;
+  ${list.map(b=>`<div class="card row" style="align-items:flex-start"><div class="bookcover">${b.e}</div><div class="sp"><b>${E(b.t)}</b><div class="mut">${E(b.a)} · ${E(b.d)}</div><p style="font-size:14px;margin-top:4px">${E(b.desc)}</p><div class="row" style="margin-top:8px"><a class="btn" href="${b.u}" target="_blank" rel="noopener" style="text-decoration:none;padding:8px 14px;font-size:14px">📖 Ouvrir le livre</a></div></div></div>`).join('')||'<p class="mut card">Aucun livre trouvé.</p>'}`;
 }
 function toggleTheme(){const d=document.documentElement.getAttribute('data-theme')==='dark';if(d){document.documentElement.removeAttribute('data-theme');localStorage.theme='light'}else{document.documentElement.setAttribute('data-theme','dark');localStorage.theme='dark'}render()}
 function nav(){return `<nav>${['home','search','new','lib','msg','me'].map(v=>`<button class="${view===v?'on':''}" onclick="go('${v}')">${I(v,22)}${v==='msg'&&un?`<span class="dot">${un}</span>`:''}</button>`).join('')}</nav>`}
-function go(v,c){view=v;cur=c||null;try{history.pushState({view:v,cur:cur},'','#'+v+(c?'/'+c:''))}catch(e){}render()}
+function go(v,c){view=v;cur=c||null;if(v==='notifs'){api('notif_read').then(()=>{notifCount=0})}try{history.pushState({view:v,cur:cur},'','#'+v+(c?'/'+c:''))}catch(e){}render()}
 window.addEventListener('popstate',e=>{if(e.state){view=e.state.view||'home';cur=e.state.cur||null;render()}});
 function skeleton(){return `<div class="card"><div class="skel" style="height:44px;width:44px;border-radius:50%"></div><div class="skel" style="height:16px;margin-top:12px"></div><div class="skel" style="height:140px;margin-top:10px"></div></div>`}
-async function render(){try{if(!tok){$('#app').innerHTML=authHTML();return}if(!me){me=await api('me');if(!me||!me.id){tok='';localStorage.t='';me=null;$('#app').innerHTML=authHTML();return}}let h='';if(view==='home'){h=await home()}else if(view==='search'){h=searchV()}else if(view==='new'){h=newV()}else if(view==='lib'){h=libView()}else if(view==='msg'){h=cur?await convo():await chats()}else{h=await prof(cur||me.id)} $('#app').innerHTML=`<div class="w">${h}</div>`+nav();if(view==='msg'&&cur){const m=$('#ml');if(m)m.scrollTop=1e9}clearInterval(ptimer);ptimer=setInterval(tick,10000);}catch(e){console.error(e);$('#app').innerHTML=authHTML()}}
+async function loadNotifs(){try{const r=await api('notifs');if(r&&r.un!==undefined) notifCount=r.un; const b=document.getElementById('bellBtn'); if(b) b.innerHTML=`🔔${notifCount?`<i>${notifCount}</i>`:''}`}catch(e){}}
+async function render(){try{if(!tok){$('#app').innerHTML=authHTML();return}if(!me){me=await api('me');if(!me||!me.id){tok='';localStorage.t='';me=null;$('#app').innerHTML=authHTML();return}}let h='';if(view==='home'){h=await home()}else if(view==='search'){h=searchV()}else if(view==='new'){h=newV()}else if(view==='lib'){h=libView()}else if(view==='explore'){h=await exploreV()}else if(view==='notifs'){h=await notifsView()}else if(view==='msg'){h=cur?await convo():await chats()}else{h=await prof(cur||me.id)} $('#app').innerHTML=`<div class="w">${h}</div>`+nav();if(view==='msg'&&cur){const m=$('#ml');if(m)m.scrollTop=1e9}clearInterval(ptimer);ptimer=setInterval(tick,10000);loadNotifs();}catch(e){console.error(e);$('#app').innerHTML=authHTML()}}
 function authHTML(){return `<div class="w"><div class="topbar"><h1 style="margin-top:30px;font-size:30px">Meeting University<br>of N'djamena</h1><button class="ghost" onclick="toggleTheme()">🌙</button></div><p class="mut">Le réseau des étudiants</p><div class="card"><input id="n" placeholder="Nom complet">${reg?'<input id="f" placeholder="Filière (ex : Droit L2)"><input id="s" placeholder="Réponse secrète">':''}<input id="p" type="password" placeholder="Mot de passe"><button class="btn" style="width:100%;margin-top:8px" onclick="auth()">${reg?'Créer mon compte':'Se connecter'}</button><p class="mut" style="margin-top:12px" onclick="reg=!reg;render()"><u>${reg?'J\'ai déjà un compte':'Créer un compte'}</u></p>${reg?'':'<p class="mut" style="margin-top:8px" onclick="forgot()"><u>Mot de passe oublié</u></p>'}</div></div>`}
 async function auth(){toast('Un instant…');const r=await api(reg?'reg':'login',{name:$('#n').value,pass:$('#p').value,filiere:$('#f')?.value,secret:$('#s')?.value});if(r.e)return toast(r.e);localStorage.t=tok=r.t;me=null;view='home';render()}
 async function forgot(){const n=$('#n').value||prompt('Ton nom'),s=prompt('Ta réponse secrète'),p=prompt('Nouveau mot de passe');if(!n||!s||!p)return;const r=await fetch('/api/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,secret:s,pass:p})}).then(r=>r.json());toast(r.e||'Mot de passe changé')}
 function img(file){return new Promise(ok=>{const r=new FileReader();r.onload=()=>{if(!eco)return ok(r.result);const i=new Image();i.onload=()=>{const k=Math.min(1,800/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.6))};i.src=r.result};r.readAsDataURL(file)})}
 const pickMedia=()=>new Promise(ok=>{const i=document.createElement('input');i.type='file';i.accept='image/*,video/*,application/pdf';i.onchange=()=>i.files[0]&&ok(i.files[0]);i.click()});
 function readFileAsDataURL(f){return new Promise(ok=>{const r=new FileReader();r.onload=()=>ok(r.result);r.readAsDataURL(f)})}
+function bellHTML(){return `<button class="bell" id="bellBtn" onclick="go('notifs')">🔔${notifCount?`<i>${notifCount}</i>`:''}</button>`}
 async function home(){
   let ps=null,st=null;
   try{const cached=JSON.parse(localStorage.feedCache||'null');if(cached&&cached.length)ps=cached}catch(e){}
-  if(!ps){$('#app').innerHTML=`<div class="w"><div class="topbar"><h2>Accueil</h2><button class="ghost" onclick="toggleTheme()">🌙</button></div>${skeleton()}</div>`+nav()}
+  if(!ps){$('#app').innerHTML=`<div class="w"><div class="topbar"><h2>Accueil</h2>${bellHTML()}</div>${skeleton()}</div>`+nav()}
   const res=await Promise.all([api('stories').catch(()=>[]),api('feed',{type:F.type,group:F.group,saved:F.saved}).catch(()=>[])]);
   st=res[0]||[];ps=res[1]||[];
   if(ps&&ps.length) try{localStorage.feedCache=JSON.stringify(ps)}catch(e){}
   storiesCache=st;feedCache=ps;
   const shown=ps.slice(0,feedLimit);
   const T=[['','Tout'],['annonce','Annonces'],['cours','Cours'],['event','Événements'],['poll','Sondages'],['vente','Petites annonces']];
-  return `<div class="topbar"><h2>Accueil</h2><div class="row"><button class="ghost" onclick="refreshFeed()">↻ Actualiser</button><button class="ghost" onclick="toggleTheme()">🌙</button></div></div>
+  return `<div class="topbar"><h2>Accueil</h2><div class="row"><button class="ghost" onclick="go('explore')">🔍 Découvrir</button>${bellHTML()}<button class="ghost" onclick="toggleTheme()">🌙</button></div></div>
   <div class="st"><div onclick="story()"><div class="av" style="border:3px dashed #8a4dff">+</div>Mon statut</div>${st.map((s,i)=>`<div onclick="openStory(${i})">${av(s.name,s.by,'',s.photo)}${E((s.name||'?').split(' ')[0])}</div>`).join('')}</div>
   <div class="chips">${T.map(([v,l])=>`<button class="${F.type===v&&!F.saved?'on':''}" onclick="F.type='${v}';F.saved=0;feedLimit=10;render()">${l}</button>`).join('')}<button class="${F.saved?'on':''}" onclick="F.saved=1;render()">Favoris</button></div>
   <div class="chips"><button class="${F.group?'':'on'}" onclick="F.group='';render()">Toutes les filières</button><button class="${F.group?'on':''}" onclick="F.group='${E(me.filiere)}';render()">Ma filière : ${E(me.filiere)}</button></div>
@@ -128,6 +137,14 @@ async function home(){
 }
 function refreshFeed(){feedLimit=10;localStorage.removeItem('feedCache');render();toast('Actualisé')}
 function downloadBtn(data,filename,label){return `<a class="ghost" href="${data}" download="${filename}" style="text-decoration:none;display:inline-block">${label}</a>`}
+function commentsHTML(p){
+  const all=p.com||[]; const showAll=!!expandedCm[p.id]; const list=showAll?all:all.slice(-3);
+  return `<div id="cmwrap-${p.id}">
+  ${all.length>3?`<button class="ghost" style="margin:8px 0" onclick="expandedCm['${p.id}']=!expandedCm['${p.id}'];render()">${showAll?'Masquer les commentaires':'Voir tous les ${all.length} commentaires'}</button>`:''}
+  ${list.map(c=>`<div class="cmt">${av(c.name,c.by,'',c.photo||'')} <div class="cmtbox"><b>${E(c.name)}</b> <span class="mut">${ago(c.at)}</span><div>${E(c.text)}</div></div></div>`).join('')||'<p class="mut" style="margin:6px 0">Aucun commentaire. Sois le premier !</p>'}
+  <div class="row" style="margin-top:8px"><input id="cmt-${p.id}" placeholder="Ajouter un commentaire…" onkeydown="if(event.key==='Enter')sendComment('${p.id}')"><button class="btn" style="padding:10px 14px" onclick="sendComment('${p.id}')">Envoyer</button></div></div>`;
+}
+async function sendComment(pid){const el=document.getElementById('cmt-'+pid); if(!el) return; const t=el.value.trim(); if(!t) return; el.value=''; await api('comment',{id:pid,text:t}); expandedCm[pid]=true; localStorage.removeItem('feedCache'); render(); toast('Commentaire publié 💬')}
 function postH(p){
   const sv=(me.saved||[]).includes(p.id),lk=(p.likes||[]).includes(me.id),tot=(p.opts||[]).reduce((a,o)=>a+o.v.length,0);
   const L={annonce:'Annonce',cours:'Cours',event:'Événement',poll:'Sondage',vente:'Petite annonce'}[p.type];
@@ -143,13 +160,14 @@ function postH(p){
   <p style="margin-top:8px;white-space:pre-wrap">${E(p.text)}</p>
   <div style="position:relative" ondblclick="dblLike('${p.id}')">${media}<div class="heart-pop" id="hp-${p.id}">❤️</div></div>
   ${(p.opts||[]).map((o,i)=>`<div class="bar" onclick="api('vote',{id:'${p.id}',i:${i}}).then(render)"><i style="width:${tot?o.v.length/tot*100:0}%"></i><span>${E(o.t)} · ${o.v.length}</span></div>`).join('')}
-  <div class="row"><button class="ic ${lk?'on':''}" onclick="api('like',{id:'${p.id}'}).then(render)">${I('heart',22,lk)}</button><span class="mut">${(p.likes||[]).length}</span><button class="ic" onclick="cm('${p.id}')">${I('msg',22)}</button><span class="mut">${(p.com||[]).length}</span><span class="sp"></span><button class="ic ${sv?'on':''}" onclick="api('save',{id:'${p.id}'}).then(()=>{me=null;render()})">${I('bm',22,sv)}</button><button class="ic" onclick="rep('${p.by}')">${I('flag',20)}</button></div>
-  ${(p.com||[]).slice(-3).map(c=>`<p class="mut"><b>${E(c.name)}</b> ${E(c.text)}</p>`).join('')}</div>`;
+  <div class="row"><button class="ic ${lk?'on':''}" onclick="api('like',{id:'${p.id}'}).then(render)">${I('heart',22,lk)}</button><span class="mut">${(p.likes||[]).length}</span><button class="ic" onclick="document.getElementById('cmt-${p.id}').focus()">${I('msg',22)}</button><span class="mut">${(p.com||[]).length}</span><span class="sp"></span><button class="ic ${sv?'on':''}" onclick="api('save',{id:'${p.id}'}).then(()=>{me=null;render()})">${I('bm',22,sv)}</button><button class="ic" onclick="rep('${p.by}')">${I('flag',20)}</button></div>
+  ${commentsHTML(p)}</div>`;
 }
 async function delPost(id){if(!confirm('Supprimer cette publication ? Cette action est définitive.'))return;const r=await api('delpost',{id});if(r.e)return toast(r.e);localStorage.removeItem('feedCache');toast('Publication supprimée 🗑️');render()}
 async function dblLike(id){const el=document.getElementById('hp-'+id);if(el){el.classList.add('show');setTimeout(()=>el.classList.remove('show'),600)}const p=feedCache.find(x=>x.id===id);if(p&&!(p.likes||[]).includes(me.id)){await api('like',{id});me=null;render()}}
-async function cm(i){const t=prompt('Ton commentaire');if(t){await api('comment',{id:i,text:t});render()}}
 async function rep(i){const t=prompt('Pourquoi signaler ?');if(t){await api('report',{target:i,why:t});toast('Signalement envoyé')}}
+async function notifsView(){const r=await api('notifs'); notifCount=0; const list=r.list||[]; return `<div class="topbar"><h2>🔔 Notifications</h2><button class="ghost" onclick="go('home')">Retour</button></div>${list.length?list.map(n=>{let icon=n.type==='like'?'❤️':n.type==='comment'?'💬':'👤'; let txt=n.type==='like'?`a aimé ta publication`:n.type==='comment'?`a commenté : "${E(n.text)}"`:n.text||'s’est abonné(e) à toi'; return `<div class="card row" style="${n.seen?'':'border:2px solid #8a4dff'}" onclick="go('me','${n.from}')">${av(n.fromName,n.from,'',n.fromPhoto)}<div class="sp"><b>${E(n.fromName)}</b> ${txt}<div class="mut">${ago(n.at)}</div></div><span style="font-size:22px">${icon}</span></div>`}).join(''):'<p class="mut card">Aucune notification pour le moment. Publie quelque chose, les autres vont réagir !</p>'}`;}
+async function exploreV(){const ps=await api('explore',{type:exploreType}); feedCache=ps; return `<div class="topbar"><h2>🔍 Découvrir</h2><button class="ghost" onclick="go('home')">Accueil</button></div><p class="mut">Les publications les plus aimées de toute l’université.</p><div class="chips"><button class="${exploreType===''?'on':''}" onclick="exploreType='';render()">Tout</button>${['annonce','cours','event','poll','vente'].map(t=>`<button class="${exploreType===t?'on':''}" onclick="exploreType='${t}';render()">${t}</button>`).join('')}</div><div class="exgrid">${(ps||[]).map(p=>p.img&&!p.img.includes('data:video')&&!p.img.includes('application/pdf')?`<div onclick="go('me','${p.by}')"><img loading="lazy" src="${p.img}"><span>❤️ ${(p.likes||[]).length}</span></div>`:p.img&&p.img.includes('data:video')?`<div onclick="go('me','${p.by}')" style="display:grid;place-items:center;font-size:32px">🎬<span>❤️ ${(p.likes||[]).length}</span></div>`:`<div onclick="go('me','${p.by}')" style="padding:8px;font-size:13px">${E((p.text||'').slice(0,70))}<span>❤️ ${(p.likes||[]).length}</span></div>`).join('')||'<p class="mut">Aucun post à découvrir.</p>'}</div><div style="margin-top:16px">${(ps||[]).slice(0,5).map(postH).join('')}</div>`;}
 async function story(){const t=prompt('Texte du statut')||'';const f=confirm('Ajouter une image / vidéo ?')?await pickMedia():'';let url='';if(f instanceof File){url=await readFileAsDataURL(f)}if(t||url){await api('story',{text:t,img:url});toast('Statut publié (24 h)');render()}}
 let storyIdx=0,storyTimer=null;
 function openStory(i){storyIdx=i;showStory()}
@@ -158,7 +176,7 @@ function closeStory(){clearInterval(storyTimer);$('#ov').style.display='none'}
 function nextStory(){if(storyIdx<storiesCache.length-1){storyIdx++;showStory()}else closeStory()}
 function prevStory(){if(storyIdx>0){storyIdx--;showStory()}}
 async function replyStory(e){const s=storiesCache[storyIdx];if(!s)return;await api('send',{to:s.by,text:e,ref:s.text||'Média'});closeStory();toast('Réponse envoyée')}
-function searchV(){return `<h2>Recherche</h2><input placeholder="Étudiant, filière ou mot…" oninput="srch(this.value)"><div id="r"></div>`}
+function searchV(){return `<div class="topbar"><h2>Recherche</h2>${bellHTML()}</div><div class="chips"><button class="ghost" onclick="go('explore')">🔍 Voir Découvrir - les plus aimés</button></div><input placeholder="Étudiant, filière ou mot…" oninput="srch(this.value)"><div id="r"></div>`}
 let sT;function srch(q){clearTimeout(sT);sT=setTimeout(async()=>{if(!q)return $('#r').innerHTML='';const u=await api('users',{q});$('#r').innerHTML=(u||[]).map(x=>`<div class="card row" onclick="go('me','${x.id}')">${av(x.name,x.id,'',x.photo)}<div><b>${E(x.name)}${vb(x.v)}</b><div class="mut">${E(x.filiere)}</div></div></div>`).join('')||'<p class="mut">Aucun résultat</p>'},300)}
 let draft={};
 function newV(){return `<h2>Publier</h2><div class="card"><select id="ty"><option value="post">Publication</option><option value="annonce">Annonce</option><option value="cours">Cours / PDF</option><option value="event">Événement</option><option value="poll">Sondage</option><option value="vente">Petite annonce</option></select><textarea id="tx" rows="4" placeholder="Écris ici… (optionnel si photo/vidéo)"></textarea><input id="dt" placeholder="Date de l'événement (optionnel)"><textarea id="op" rows="3" placeholder="Sondage : une option par ligne (optionnel)"></textarea><label class="row"><input type="checkbox" id="gp" style="width:auto"> Réserver à ma filière (${E(me.filiere)})</label><div id="pv" style="text-align:center;color:var(--mut);padding:10px;border:1px dashed var(--line);border-radius:14px">Aucun média — appuie sur le bouton ci-dessous</div><div class="row" style="margin-top:10px"><button class="ghost" onclick="pickMediaFile()">📸 Photo / 🎬 Vidéo / 📄 PDF</button><span class="sp"></span><button class="btn" onclick="pub()">Publier ➡️</button></div></div>`}
@@ -186,7 +204,7 @@ async function prof(i){
 }
 async function setPhoto(){const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=()=>{const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=async()=>{const s=Math.min(im.width,im.height),c=document.createElement('canvas');c.width=c.height=256;c.getContext('2d').drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,256,256);const x=await api('photo',{img:c.toDataURL('image/jpeg',.8)});if(x.e)return toast(x.e);localStorage.pv=Date.now();me=null;toast('Photo enregistrée ✅');render()};im.src=r.result};r.readAsDataURL(f)};i.click()}
 async function edit(){const b=prompt('Ta bio',me.bio||''),f=prompt('Ta filière',me.filiere||'');if(b===null)return;await api('bio',{bio:b,filiere:f});me=null;render()}
-async function tick(){if(!tok||document.hidden)return;const p=await api('poll');if(!p||p.un===undefined)return;un=p.un;if(pun>=0&&p.un>pun&&p.last){toast('Message de '+p.last.name)}pun=p.un;const nv=document.querySelector('nav');if(nv)nv.outerHTML=nav()}
+async function tick(){if(!tok||document.hidden)return;const p=await api('poll');if(!p||p.un===undefined)return;un=p.un;const nv=document.querySelector('nav');if(nv)nv.outerHTML=nav();loadNotifs();}
 setInterval(()=>{if(tok) fetch('/api/poll',{method:'POST',headers:{'Content-Type':'application/json','x-token':tok},body:'{}'}).catch(()=>{})},600000);
 let startY=0;document.addEventListener('touchstart',e=>{startY=e.touches[0].clientY},{passive:true});
 document.addEventListener('touchend',e=>{const dy=e.changedTouches[0].clientY-startY;if(dy>120&&window.scrollY===0&&tok&&view==='home'){refreshFeed()}},{passive:true});
