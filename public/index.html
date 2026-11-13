@@ -1,4 +1,10 @@
-<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#d6ecff"><title>Meeting University of N'djamena</title>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#d6ecff">
+<title>Meeting University of N'djamena</title>
 <style>
 :root{--bg:#d6ecff;--card:#ffffff;--line:#b9d9f5;--t:#10224a;--mut:#5b6f99;--g:linear-gradient(135deg,#2f6bff,#8a4dff)}
 *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
@@ -31,7 +37,10 @@ nav button .em{opacity:.5}nav button.on .em{opacity:1;transform:scale(1.25)}
 .card{box-shadow:0 2px 12px #4f8fd622}
 nav{box-shadow:0 -2px 12px #4f8fd622}
 #ov{color:#fff}#ov .mut{color:#c7d2ee}
-</style></head><body><div id="toast"></div><div id="ov" onclick="this.style.display='none'"></div><div id="app"></div>
+</style>
+</head>
+<body>
+<div id="toast"></div><div id="ov" onclick="this.style.display='none'"></div><div id="app"></div>
 <script>
 window.onerror=(m,u,l)=>{try{document.getElementById('toast').textContent='Erreur : '+m+' (L.'+l+')';document.getElementById('toast').style.display='block'}catch(e){}};
 var reg=false;
@@ -162,4 +171,6 @@ const a=document.activeElement&&document.activeElement.id;if(['mt','tx','q','op'
 if(view==='home'||view==='msg')render()}
 
 render();
-</script></body></html>
+</script>
+</body>
+</html>
