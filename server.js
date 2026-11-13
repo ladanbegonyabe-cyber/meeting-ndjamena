@@ -1,165 +1,130 @@
-<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#d6ecff"><title>Meeting University of N'djamena</title>
-<style>
-:root{--bg:#d6ecff;--card:#ffffff;--line:#b9d9f5;--t:#10224a;--mut:#5b6f99;--g:linear-gradient(135deg,#2f6bff,#8a4dff)}
-*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
-body{background:var(--bg);color:var(--t);font:16px/1.4 system-ui,sans-serif;padding-bottom:72px}
-button,input,textarea,select{font:inherit;color:inherit}
-input,textarea,select{width:100%;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin:5px 0}
-.btn{background:var(--g);border:0;border-radius:14px;padding:12px 18px;font-weight:700;cursor:pointer}
-.ghost{background:none;border:1px solid var(--line);border-radius:12px;padding:6px 12px;cursor:pointer}
-.w{max-width:560px;margin:auto;padding:12px}
-.card{background:var(--card);border-radius:20px;padding:14px;margin:12px 0}
-.mut{color:var(--mut);font-size:14px}.row{display:flex;gap:10px;align-items:center}.sp{flex:1}
-h1,h2{font-weight:800}
-.av{width:44px;height:44px;border-radius:50%;background:var(--g);display:grid;place-items:center;font-weight:800;flex:none}
-nav{position:fixed;bottom:0;left:0;right:0;background:#ffffff;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
-nav button{flex:1;background:none;border:0;padding:12px 0;position:relative;color:var(--mut);display:flex;justify-content:center}
-nav button.on{color:#a78bff}
-.dot{position:absolute;top:6px;right:22%;background:#ff4d6d;font-size:12px;border-radius:10px;padding:0 6px;color:#fff}
-.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 0}.chips button{white-space:nowrap;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:8px 14px;cursor:pointer}.chips .on{background:var(--g);border:0}
-.st{display:flex;gap:12px;overflow-x:auto;padding:6px 0}.st div{text-align:center;font-size:12px;flex:none;width:68px}.st .av{width:62px;height:62px;border:3px solid #8a4dff;font-size:22px}
-.ic{background:none;border:0;cursor:pointer;padding:6px 8px;color:var(--mut);display:inline-flex;align-items:center}.ic.on{color:#ff5c8a}.vk{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;background:#3b8bff;color:#fff;font-size:10px;vertical-align:middle}.rf{border-left:3px solid #fff8;padding-left:8px;margin-bottom:4px;font-size:13px;opacity:.85}
-.post img,.post video,.big{width:100%;border-radius:16px;margin:8px 0}
-.b{max-width:78%;padding:9px 13px;border-radius:18px;margin:5px 0;background:var(--card)}.me{margin-left:auto;background:var(--g)}
-.tag{background:var(--line);border-radius:10px;padding:2px 8px;font-size:12px}
-.bar{background:var(--line);border-radius:10px;overflow:hidden;margin:5px 0;cursor:pointer;position:relative;padding:8px}.bar i{position:absolute;inset:0 auto 0 0;background:#3b4bd8;opacity:.6}.bar span{position:relative}
-#ov{position:fixed;inset:0;background:#000d;display:none;place-items:center;z-index:9;padding:20px;text-align:center}
-#toast{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:var(--g);padding:10px 18px;border-radius:20px;display:none;z-index:10}
-.em{display:inline-block;line-height:1;transition:transform .2s,opacity .2s}
-nav button .em{opacity:.5}nav button.on .em{opacity:1;transform:scale(1.25)}
-.btn,.chips .on,.me,.av,#toast{color:#fff}
-.card{box-shadow:0 2px 12px #4f8fd622}
-nav{box-shadow:0 -2px 12px #4f8fd622}
-#ov{color:#fff}#ov .mut{color:#c7d2ee}
-</style></head><body><div id="toast"></div><div id="ov" onclick="this.style.display='none'"></div><div id="app"></div>
-<script>
-window.onerror=(m,u,l)=>{try{document.getElementById('toast').textContent='Erreur : '+m+' (L.'+l+')';document.getElementById('toast').style.display='block'}catch(e){}};
-var reg=false;
-const $=s=>document.querySelector(s),E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let tok=localStorage.t||'',me,view='home',F={type:'',group:'',saved:0},cur=null,un=0,eco=localStorage.eco!=='0',ptimer,pun=-1,rec,chunks;
-const api=async(n,b={})=>{try{const r=await fetch('/api/'+n,{method:'POST',headers:{'Content-Type':'application/json','x-token':tok},body:JSON.stringify(b)});if(r.status===401){localStorage.t=tok='';me=null;render();return{}}return await r.json()}catch(e){toast('Serveur en réveil, réessaie dans 30 secondes');return{e:'Serveur en réveil'}}};
-const toast=m=>{const t=$('#toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2500)};
-const ago=t=>{const m=(Date.now()-t)/6e4|0;return m<1?"à l'instant":m<60?m+' min':m<1440?(m/60|0)+' h':(m/1440|0)+' j'};
-const av=(n,id,st='')=>`<div class="av" style="position:relative;overflow:hidden;${st}">${E(n[0]||'?').toUpperCase()}${id?`<img src="/photo/${id}?v=${PV}" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;margin:0;border-radius:0">`:''}</div>`;
-const vb=v=>v?' <span class="vk">✓</span>':'';
-const IC={home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>',search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',new:'<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>',msg:'<path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12z"/>',me:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>',heart:'<path d="M12 20.5S3 15 3 9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6-9 11.5-9 11.5z"/>',bm:'<path d="M6 3h12v18l-6-4-6 4z"/>',flag:'<path d="M5 21V4h12l-2 4 2 4H5"/>',mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',send:'<path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4z"/>',back:'<path d="M15 5l-7 7 7 7"/>',stop:'<rect x="6" y="6" width="12" height="12" rx="2"/>',image:'<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/>',file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',x:'<path d="M6 6l12 12M18 6 6 18"/>'};
-const IE={home:'🏡',search:'🔎',new:'✨',msg:'💬',me:'😎',heart:'🤍',bm:'📌',flag:'🚩',mic:'🎙️',send:'🚀',back:'⬅️',stop:'⏹️',image:'🖼️',file:'📄',x:'✖️'};
-let ST=[],CS=null,sig='',PV=localStorage.pv||0;
+const http = require('http'), fs = require('fs'), path = require('path'), crypto = require('crypto'), { promisify } = require('util');
+const scrypt = promisify(crypto.scrypt);
+let Pool = null; try { Pool = require('pg').Pool } catch (e) {}
+const pool = process.env.DATABASE_URL && Pool ? new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false }, max: 4 }) : null;
+const DIR = process.env.DATA_DIR || __dirname, F = path.join(DIR, 'data.json'), MDIR = path.join(DIR, 'media');
+const COLS = ['users', 'posts', 'stories', 'msgs', 'reports', 'tok'];
+let D = { users: [], posts: [], stories: [], msgs: [], reports: [], tok: {} };
+const TY = {}, RL = {}, last = {};
+let VER = 0, dirty = false, timer = null, busy = false;
 
-window.addEventListener('popstate', e => {
-  if(e.state) {
-    view = e.state.view || 'home';
-    cur = e.state.cur || null;
-    render(false);
+const id = () => crypto.randomBytes(8).toString('hex');
+const S = (v, n) => String(v == null ? '' : v).slice(0, n);
+const sha = s => crypto.createHash('sha256').update(String(s)).digest('hex');
+const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+const ok = { ok: 1 }, TOO = { e: 'Trop de tentatives. Réessaie dans quelques minutes.', _c: 429 };
+const NAME = /^[\p{L}\p{N}][\p{L}\p{N} ._'-]{1,28}[\p{L}\p{N}]$/u;
+const IMG = /^data:(image\/(?:jpeg|png|webp|gif));base64,([A-Za-z0-9+\/]+={0,2})$/;
+const VID = /^data:(video\/[\w.+-]+)(?:;[\w=.+-]+)*;base64,([A-Za-z0-9+\/]+={0,2})$/;
+const PDF = /^data:(application\/pdf)(?:;[\w=.+-]+)*;base64,([A-Za-z0-9+\/]+={0,2})$/;
+const AUD = /^data:(audio\/[\w.+-]+)(?:;[\w=.+-]+)*;base64,([A-Za-z0-9+\/]+={0,2})$/;
+const ADM = (process.env.ADMINS || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+const SEC = { 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'no-referrer' };
+
+const limit = (k, max, ms) => { const n = Date.now(); const r = RL[k] && RL[k].t > n ? RL[k] : (RL[k] = { t: n + ms, c: 0 }); return ++r.c > max };
+
+const hashPw = async p => { const s = crypto.randomBytes(16); const h = await scrypt(p, s, 32); return 's1$' + s.toString('hex') + '$' + h.toString('hex') };
+const checkPw = async (p, st) => { try { const [, s, h] = String(st).split('$'); const x = await scrypt(p, Buffer.from(s, 'hex'), 32); return crypto.timingSafeEqual(x, Buffer.from(h, 'hex')) } catch (e) { return false } };
+const DUMMY = hashPw('dummy-password');
+
+const UB = new Map(), UN = new Map(), PM = new Map(), CM = new Map(), UK = new Map();
+const pk = (a, b) => a < b ? a + '|' + b : b + '|' + a;
+function addMsg(m) { const k = pk(m.from, m.to); if (!CM.has(k)) CM.set(k, []); CM.get(k).push(m); for (const x of [m.from, m.to]) { if (!UK.has(x)) UK.set(x, new Set()); UK.get(x).add(k) } }
+function reindex() { UB.clear(); UN.clear(); PM.clear(); CM.clear(); UK.clear(); D.users.forEach(u => { UB.set(u.id, u); UN.set(u.name.toLowerCase(), u) }); D.posts.forEach(p => PM.set(p.id, p)); D.msgs.forEach(addMsg) }
+
+async function load() {
+  if (pool) {
+    await pool.query('CREATE TABLE IF NOT EXISTS kv(k text PRIMARY KEY, v text NOT NULL)');
+    await pool.query('CREATE TABLE IF NOT EXISTS media(id text PRIMARY KEY, mime text NOT NULL, data bytea NOT NULL)');
+    const r = await pool.query('SELECT k,v FROM kv');
+    for (const row of r.rows) if (COLS.includes(row.k)) { D[row.k] = JSON.parse(row.v); last[row.k] = row.v }
+    console.log('Base de données connectée');
+  } else {
+    try { const j = JSON.parse(fs.readFileSync(F)); for (const k of COLS) if (j[k]) D[k] = j[k] } catch (e) {}
   }
+  reindex()
+}
+const save = () => { dirty = true; VER++; if (!timer) timer = setTimeout(flush, 2500) };
+async function flush() {
+  timer = null; if (!dirty || busy) return; dirty = false; busy = true;
+  try {
+    const now = Date.now(); for (const t in D.tok) if (D.tok[t].exp < now) delete D.tok[t];
+    const ch = []; for (const k of COLS) { const s = JSON.stringify(D[k]); if (s !== last[k]) ch.push([k, s]) }
+    if (pool) { for (const [k, s] of ch) { await pool.query('INSERT INTO kv(k,v) VALUES($1,$2) ON CONFLICT (k) DO UPDATE SET v=$2', [k, s]); last[k] = s } }
+  } catch (e) { dirty = true }
+  busy = false; if (dirty && !timer) timer = setTimeout(flush, 2500)
+}
+
+async function putMedia(du, kind, max) {
+  if (typeof du !== 'string' || du.length > max) return null;
+  let m = kind === 'audio' ? AUD.exec(du) : (kind === 'video' ? VID.exec(du) : (kind === 'pdf' ? PDF.exec(du) : IMG.exec(du)));
+  if (!m) return null;
+  const buf = Buffer.from(m[2], 'base64'), mid = crypto.randomBytes(12).toString('hex'), mime = m[1].toLowerCase();
+  if (pool) await pool.query('INSERT INTO media(id,mime,data) VALUES($1,$2,$3)', [mid, mime, buf]);
+  return mid
+}
+async function getMedia(mid) {
+  if (pool) { const r = await pool.query('SELECT mime,data FROM media WHERE id=$1', [mid]); return r.rows[0] || null }
+  return null
+}
+
+function newTok(uid) { const t = crypto.randomBytes(24).toString('hex'); D.tok[sha(t)] = { u: uid, exp: Date.now() + 60 * 864e5 }; save(); return t }
+function auth(tk) { if (typeof tk !== 'string') return null; const r = D.tok[sha(tk)]; return r && r.exp > Date.now() ? UB.get(r.u) || null : null }
+
+const pub = u => ({ id: u.id, name: u.name, filiere: u.filiere, bio: u.bio || '', v: ADM.includes(u.name.toLowerCase()), fol: D.users.reduce((a, x) => a + ((x.following || []).includes(u.id) ? 1 : 0), 0) });
+const nm = i => (UB.get(i) || {}).name || '?';
+
+const A = {
+  reg: async (b, ip) => {
+    const n = S(b.name, 40).trim(), p = S(b.pass, 200), sec = S(b.secret, 100).toLowerCase().trim();
+    if (!NAME.test(n)) return { e: "Nom invalide" };
+    if (UN.has(n.toLowerCase())) return { e: 'Ce nom existe déjà' };
+    const u = { id: id(), name: n, filiere: S(b.filiere || 'Général', 40), pass: await hashPw(p), secret: await hashPw(sec), following: [], saved: [], blocked: [], at: Date.now() };
+    D.users.push(u); UB.set(u.id, u); UN.set(n.toLowerCase(), u); save(); return { t: newTok(u.id) }
+  },
+  login: async (b) => {
+    const n = S(b.name, 40).trim().toLowerCase(), u = UN.get(n);
+    const good = await checkPw(S(b.pass, 200), u ? u.pass : await DUMMY);
+    if (!u || !good) return { e: 'Nom ou mot de passe incorrect' };
+    return { t: newTok(u.id) }
+  }
+};
+
+const P = {
+  me: u => ({ ...pub(u), following: u.following, saved: u.saved, blocked: u.blocked }),
+  users: (u, b) => D.users.filter(x => x.id !== u.id).slice(0, 30).map(pub),
+  feed: () => D.posts.slice(-40).reverse().map(p => ({ ...p, name: nm(p.by), com: [] })),
+  stories: () => []
+};
+
+const srv = http.createServer((q, r) => {
+  if (q.method === 'POST' && q.url.startsWith('/api/')) {
+    let s = '';
+    q.on('data', d => s += d);
+    q.on('end', async () => {
+      let o = { e: 'Erreur' };
+      try {
+        const b = JSON.parse(s || '{}'), n = q.url.slice(5);
+        if (A[n]) o = await A[n](b);
+        else { const u = auth(q.headers['x-token']); if (!u) { r.writeHead(401, SEC); return r.end('{}') } if (P[n]) o = await P[n](u, b); }
+      } catch (e) {}
+      r.writeHead(200, { 'Content-Type': 'application/json', ...SEC });
+      r.end(JSON.stringify(o));
+    });
+    return;
+  }
+
+  // Envoi direct du fichier index.html
+  const filePath = path.join(__dirname, 'public', 'index.html');
+  fs.readFile(filePath, (err, content) => {
+    if (err) {
+      r.writeHead(404, { 'Content-Type': 'text/plain' });
+      r.end('Erreur : index.html introuvable dans le dossier public');
+    } else {
+      r.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', ...SEC });
+      r.end(content);
+    }
+  });
 });
 
-function pushState(v, c) {
-  history.pushState({view: v, cur: c}, '', '#' + v + (c ? '/' + c : ''));
-}
-
-function img(file){return new Promise(ok=>{const r=new FileReader();r.onload=()=>{if(!eco)return ok(r.result);const i=new Image();i.onload=()=>{const k=Math.min(1,800/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.6))};i.src=r.result};r.readAsDataURL(file)})}
-const pick=()=>new Promise(ok=>{const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=()=>i.files[0]&&img(i.files[0]).then(ok);i.click()});
-const pickMedia=()=>new Promise(ok=>{const i=document.createElement('input');i.type='file';i.accept='image/*,video/*,application/pdf';i.onchange=()=>i.files[0]&&ok(i.files[0]);i.click()});
-
-function nav(){return`<nav>${['home','search','new','msg','me'].map(v=>`<button class="${view===v?'on':''}" onclick="go('${v}')">${I(v,24)}${v==='msg'&&un?`<span class="dot">${un}</span>`:''}</button>`).join('')}</nav>`}
-
-function go(v,c, push=true){
-  view=v;cur=c||null;
-  if(push) pushState(v, cur);
-  render();
-}
-
-async function render(){
-if(!tok){$('#app').innerHTML=authHTML();return}
-if(!me){me=await api('me');if(!me||!me.id){me=null;return}}
-let h='';
-if(view==='home')h=await home();else if(view==='search')h=searchV();else if(view==='new')h=newV();else if(view==='msg')h=cur?await convo():await chats();else h=await prof(cur||me.id);
-$('#app').innerHTML=`<div class="w">${h}</div>`+nav();
-if(view==='msg'&&cur){const m=$('#ml');m&&(m.scrollTop=1e9,scrollTo(0,1e9))}
-clearInterval(ptimer);ptimer=setInterval(tick,4000);
-}
-
-function authHTML(){const reg=window.reg;return`<div class="w"><h1 style="margin-top:40px;font-size:30px">Meeting University of N'djamena</h1><p class="mut">Le réseau des étudiants</p><div class="card">
-<input id="n" placeholder="Nom complet">${reg?'<input id="f" placeholder="Filière (ex : Droit L2)"><input id="s" placeholder="Réponse secrète (ex : ville de naissance)">':''}
-<input id="p" type="password" placeholder="Mot de passe (6 caractères minimum)">
-<button class="btn" style="width:100%;margin-top:8px" onclick="auth()">${reg?'Créer mon compte':'Se connecter'}</button>
-<p class="mut" style="margin-top:12px" onclick="reg=!reg;render()"><u>${reg?'J\'ai déjà un compte':'Créer un compte'}</u></p>
-${reg?'':'<p class="mut" style="margin-top:8px" onclick="forgot()"><u>Mot de passe oublié</u></p>'}</div></div>`}
-
-async function auth(){toast('Un instant…');const r=await api(window.reg?'reg':'login',{name:$('#n').value,pass:$('#p').value,filiere:$('#f')?.value,secret:$('#s')?.value});if(r.e)return toast(r.e);localStorage.t=tok=r.t;me=null;view='home';try{Notification.requestPermission()}catch(e){}render()}
-async function forgot(){const n=$('#n').value||prompt('Ton nom'),s=prompt('Ta réponse secrète'),p=prompt('Nouveau mot de passe (6 caractères minimum)');if(!n||!s||!p)return;const r=await fetch('/api/reset',{method:'POST',body:JSON.stringify({name:n,secret:s,pass:p})}).then(r=>r.json());toast(r.e||'Mot de passe changé')}
-
-async function home(){const[st,ps]=await Promise.all([api('stories'),api('feed',{type:F.type,group:F.group,saved:F.saved})]);ST=st;
-const T=[['','Tout'],['annonce','Annonces'],['cours','Cours'],['event','Événements'],['poll','Sondages'],['vente','Petites annonces']];
-return`<h2>Accueil</h2><div class="st"><div onclick="story()"><div class="av" style="border-style:dashed">${I('new',26)}</div>Mon statut</div>${st.map((s,i)=>`<div onclick="viewSt(${i})">${av(s.name,s.by)}${E(s.name.split(' ')[0])}</div>`).join('')}</div>
-<div class="chips">${T.map(([v,l])=>`<button class="${F.type===v&&!F.saved?'on':''}" onclick="F.type='${v}';F.saved=0;render()">${l}</button>`).join('')}<button class="${F.saved?'on':''}" onclick="F.saved=1;render()">Favoris</button></div>
-<div class="chips"><button class="${F.group?'':'on'}" onclick="F.group='';render()">Toutes les filières</button><button class="${F.group?'on':''}" onclick="F.group='${E(me.filiere)}';render()">Ma filière : ${E(me.filiere)}</button></div>
-${ps.map(postH).join('')||'<p class="mut card">Aucune publication ici. Utilise le bouton + pour publier.</p>'}`}
-
-function postH(p){const sv=me.saved.includes(p.id),lk=p.likes.includes(me.id),tot=p.opts.reduce((a,o)=>a+o.v.length,0),L={annonce:'Annonce',cours:'Cours',event:'Événement',poll:'Sondage',vente:'Petite annonce'}[p.type];
-let mediaHTML = '';
-if(p.img) {
-  if(p.img.includes('data:video') || p.img.endsWith('.mp4') || p.img.includes('/video/')) {
-    mediaHTML = `<video controls src="${p.img}"></video>`;
-  } else if(p.img.includes('application/pdf') || p.img.endsWith('.pdf')) {
-    mediaHTML = `<div class="card" style="background:var(--bg)"><a href="${p.img}" target="_blank" style="color:var(--t);text-decoration:none" class="row">${I('file',24)} <b>Voir le document PDF</b></a></div>`;
-  } else {
-    mediaHTML = `<img loading="lazy" decoding="async" src="${p.img}">`;
-  }
-}
-return`<div class="card post"><div class="row" onclick="go('me','${p.by}')">${av(p.name,p.by)}<div><b>${E(p.name)}</b><div class="mut">${ago(p.at)}${p.group?' · '+E(p.group):''}</div></div></div>
-${L?`<p style="margin-top:8px"><span class="tag">${L}</span>${p.date?` <span class="tag">${E(p.date)}</span>`:''}</p>`:''}
-<p style="margin-top:8px;white-space:pre-wrap">${E(p.text)}</p>${mediaHTML}
-${p.opts.map((o,i)=>`<div class="bar" onclick="api('vote',{id:'${p.id}',i:${i}}).then(render)"><i style="width:${tot?o.v.length/tot*100:0}%"></i><span>${E(o.t)} · ${o.v.length}</span></div>`).join('')}
-<div class="row"><button class="ic ${lk?'on':''}" onclick="api('like',{id:'${p.id}'}).then(render)">${I('heart',22,lk)}</button><span class="mut">${p.likes.length}</span><button class="ic" onclick="cm('${p.id}')">${I('msg',22)}</button><span class="mut">${p.com.length}</span><span class="sp"></span><button class="ic ${sv?'on':''}" onclick="api('save',{id:'${p.id}'}).then(()=>{me=null;render()})">${I('bm',22,sv)}</button><button class="ic" onclick="rep('${p.by}')">${I('flag',20)}</button></div>
-${p.com.map(c=>`<p class="mut"><b>${E(c.name)}</b> ${E(c.text)}</p>`).join('')}</div>`}
-
-async function cm(i){const t=prompt('Ton commentaire');t&&(await api('comment',{id:i,text:t}),render())}
-async function rep(i){const t=prompt('Pourquoi signaler ? (spam, harcèlement…)');t&&(await api('report',{target:i,why:t}),toast('Signalement envoyé'))}
-async function story(){const t=prompt('Texte du statut (vide = média seul)')||'';const f=confirm('Ajouter une image ou une vidéo ?')?await pickMedia():'';const mediaUrl=f instanceof File?await img(f):f;(t||mediaUrl)&&(await api('story',{text:t,img:mediaUrl}),toast('Statut publié (24 h)'),render())}
-
-function viewSt(i){CS=ST[i];const s=CS,o=$('#ov');o.innerHTML=`<div onclick="event.stopPropagation()" style="width:100%;max-width:480px"><div class="row" style="justify-content:space-between"><div class="row">${av(s.name,s.by)}<div style="text-align:left"><b>${E(s.name)}</b><div class="mut">${ago(s.at)}</div></div></div><button class="ic" style="color:#fff" onclick="$('#ov').style.display='none'">${I('x',26)}</button></div>${s.img?`<img class="big" src="${s.img}">`:''}<h2 style="margin:14px 0">${E(s.text)}</h2>${s.by===me.id?'':`<div class="row" style="justify-content:center;margin-bottom:10px">${['❤️','😂','😮','👏','🔥'].map(e=>`<button class="ic" style="font-size:26px" onclick="replySt('${e}')">${e}</button>`).join('')}</div><div class="row"><input id="sr" placeholder="Répondre au statut…" onkeydown="event.key==='Enter'&&replySt()"><button class="ic" style="color:#fff" onclick="replySt()">${I('send',24)}</button></div>`}</div>`;o.style.display='grid'}
-async function replySt(e){const t=e||($('#sr')?$('#sr').value.trim():'');if(!t||!CS)return;const r=await api('send',{to:CS.by,text:t,ref:CS.text||'Média'});if(r.e)return toast(r.e);$('#ov').style.display='none';toast('Réponse envoyée')}
-
-function searchV(){return`<h2>Recherche</h2><input id="q" placeholder="Étudiant, filière ou mot…" oninput="srch(this.value)"><div id="r"></div>`}
-let sT;function srch(q){clearTimeout(sT);sT=setTimeout(async()=>{if(!q)return $('#r').innerHTML='';const[u,p]=await Promise.all([api('users',{q}),api('feed',{q})]);$('#r').innerHTML=u.map(x=>`<div class="card row" onclick="go('me','${x.id}')">${av(x.name,x.id)}<div><b>${E(x.name)}${vb(x.v)}</b><div class="mut">${E(x.filiere)}</div></div></div>`).join('')+p.map(postH).join('')||'<p class="mut">Aucun résultat</p>'},300)}
-
-let draft={};
-function newV(){return`<h2>Publier</h2><div class="card"><select id="ty"><option value="post">Publication</option><option value="annonce">Annonce</option><option value="cours">Cours / document / PDF</option><option value="event">Événement</option><option value="poll">Sondage</option><option value="vente">Petite annonce</option></select>
-<textarea id="tx" rows="4" placeholder="Écris ici…"></textarea><input id="dt" placeholder="Date de l'événement (ex : 20 nov. à 15h)"><textarea id="op" rows="3" placeholder="Sondage : une option par ligne"></textarea>
-<label class="row"><input type="checkbox" id="gp" style="width:auto"> Réserver à ma filière (${E(me.filiere)})</label>
-<div id="pv"></div><div class="row"><button class="ghost" onclick="pickMediaFile()">${I('image',18)} Joindre fichier/média</button><span class="sp"></span><button class="btn" onclick="pub()">Publier</button></div></div>`}
-
-async function pickMediaFile(){const f=await pickMedia();if(!f)return;if(f.type.includes('pdf')){const r=new FileReader();r.onload=()=>{draft.img=r.result;$('#pv').innerHTML=`<p class="mut">PDF joint : ${f.name}</p>`};r.readAsDataURL(f)}else{draft.img=await img(f);$('#pv').innerHTML=`<img class="big" src="${draft.img}">`}}
-
-async function pub(){const r=await api('post',{type:$('#ty').value,text:$('#tx').value,date:$('#dt').value,img:draft.img,group:$('#gp').checked?me.filiere:'',opts:$('#op').value.split('\n').filter(x=>x.trim())});if(r.e)return toast(r.e);draft={};toast('Publié');go('home')}
-
-async function chats(){const[c,u]=await Promise.all([api('chats'),api('users',{q:''})]);
-return`<h2>Messages</h2>${c.map(x=>`<div class="card row" onclick="go('msg','${x.id}')">${av(x.name,x.id)}<div class="sp"><b>${E(x.name)}</b><div class="mut">${E(String(x.last).slice(0,40))}</div></div>${x.un?`<span class="dot" style="position:static">${x.un}</span>`:''}</div>`).join('')}
-<p class="mut" style="margin-top:16px">Écrire à un étudiant</p><div class="chips">${u.slice(0,15).map(x=>`<button onclick="go('msg','${x.id}')">${E(x.name)}</button>`).join('')}</div>`}
-
-async function convo(){const[r,u]=await Promise.all([api('convo',{with:cur}),api('user',{id:cur})]);
-return`<div class="row"><button class="ic" onclick="go('msg')">${I('back',24)}</button>${av(u.name||'?',cur)}<div><b>${E(u.name)}${vb(u.v)}</b><div class="mut" id="ty">${r.ty?"en train d'écrire…":''}</div></div></div><div id="ml" style="padding:10px 0;min-height:60vh">${r.m.map(m=>`<div class="b ${m.from===me.id?'me':''}">${m.ref?`<div class="rf">Référence : ${E(m.ref)}</div>`:''}${m.audio?`<audio controls src="${m.audio}" style="max-width:100%"></audio>`:E(m.text)}${m.from===me.id?`<div class="mut" style="text-align:right;font-size:11px">${m.seen?'vu ✓✓':'envoyé ✓'}</div>`:''}</div>`).join('')}</div>
-<div class="row" style="position:sticky;bottom:58px;background:var(--bg);padding:6px 0"><input id="mt" placeholder="Message…" oninput="api('typing',{to:cur})" onkeydown="event.key==='Enter'&&snd()"><button class="ic" id="mic" onclick="mic()">${I('mic',24)}</button><button class="ic" style="color:#a78bff" onclick="snd()">${I('send',24)}</button></div>`}
-
-async function snd(a){const t=$('#mt')?.value;if(!t&&!a)return;await api('send',{to:cur,text:a?'':t,audio:a||''});render()}
-async function mic(){if(rec&&rec.state==='recording'){rec.stop();return}try{const s=await navigator.mediaDevices.getUserMedia({audio:true});chunks=[];rec=new MediaRecorder(s);rec.ondataavailable=e=>chunks.push(e.data);rec.onstop=()=>{s.getTracks().forEach(t=>t.stop());$('#mic').innerHTML=I('mic',24);const f=new FileReader();f.onload=()=>snd(f.result);f.readAsDataURL(new Blob(chunks,{type:rec.mimeType}))};rec.start();$('#mic').innerHTML=I('stop',24);toast('Enregistrement… touche stop pour envoyer')}catch(e){toast('Micro refusé')}}
-
-async function prof(i){const[u,ps]=await Promise.all([i===me.id?Promise.resolve(me):api('user',{id:i}),api('feed',{by:i})]),mine=i===me.id,fl=me.following.includes(i);
-return`<div class="card" style="text-align:center"><div ${mine?'onclick="setPhoto()"':''} style="width:84px;margin:auto">${av(u.name,i,'width:84px;height:84px;font-size:34px')}</div><h2 style="margin-top:8px">${E(u.name)}${vb(u.v)}</h2><p class="mut">${E(u.filiere)} · ${u.fol} abonné(s)</p><p>${E(u.bio)}</p>
-<div class="row" style="justify-content:center;margin-top:10px;flex-wrap:wrap">${mine?`<button class="ghost" onclick="setPhoto()">Photo de profil</button><button class="ghost" onclick="edit()">Modifier</button><button class="ghost" onclick="chpw()">Mot de passe</button><button class="ghost" onclick="eco=!eco;localStorage.eco=eco?1:0;toast(eco?'Économie de données activée':'Qualité maximale')">Économie de données</button><button class="ghost" onclick="api('logout').then(()=>{localStorage.t=tok='';me=null;render()})">Déconnexion</button>`:`<button class="btn" onclick="api('follow',{id:'${i}'}).then(()=>{me=null;render()})">${fl?'Abonné ✓':"S'abonner"}</button><button class="ghost" onclick="go('msg','${i}')">Message</button><button class="ghost" onclick="if(confirm('Bloquer ?'))api('block',{id:'${i}'}).then(()=>{me=null;go('home')})">Bloquer</button>`}</div></div>${ps.map(postH).join('')}`}
-
-async function setPhoto(){const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=()=>{const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=async()=>{const s=Math.min(im.width,im.height),c=document.createElement('canvas');c.width=c.height=256;c.getContext('2d').drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,256,256);const x=await api('photo',{img:c.toDataURL('image/jpeg',.8)});if(x.e)return toast(x.e);PV=Date.now();localStorage.pv=PV;toast('Photo de profil mise à jour');render()};im.src=r.result};r.readAsDataURL(f)};i.click()}
-async function edit(){const b=prompt('Ta bio',me.bio),f=prompt('Ta filière',me.filiere);if(b===null)return;await api('bio',{bio:b,filiere:f});me=null;render()}
-async function chpw(){const o=prompt('Ancien mot de passe'),n=prompt('Nouveau mot de passe (6 caractères minimum)');if(!o||!n)return;const r=await api('pass',{old:o,pass:n});toast(r.e||'Mot de passe changé')}
-
-async function tick(){if(!tok||document.hidden)return;const p=await api('poll');if(!p||p.un===undefined)return;un=p.un;
-if(pun>=0&&p.un>pun&&p.last){toast('Message de '+p.last.name+' : '+p.last.text.slice(0,40));try{new Notification(p.last.name,{body:p.last.text})}catch(e){}}pun=p.un;
-const nv=document.querySelector('nav');nv&&(nv.outerHTML=nav());
-const ch=p.sig!==sig;sig=p.sig;if(!ch||document.querySelector('#ov[style*=grid]'))return;
-const a=document.activeElement&&document.activeElement.id;if(['mt','tx','q','op','dt','sr'].includes(a))return;
-if(view==='home'||view==='msg')render()}
-
-render();
-</script></body></html>
+load().then(() => srv.listen(process.env.PORT || 3000, () => console.log('Serveur prêt')));
