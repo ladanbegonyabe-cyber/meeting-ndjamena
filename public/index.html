@@ -1,267 +1,100 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Meeting University of N'djamena</title>
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#4f46e5">
-<link rel="icon" href="/icon-192.png">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script>document.documentElement.dataset.theme=localStorage.getItem('th')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}</script>
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0d1030"><title>Meeting University of N'djamena</title>
 <style>
-:root{--bg:#f4f5fb;--card:#fff;--tx:#161a2b;--mu:#6b7490;--pr:#4f46e5;--bd:#e3e6f2;--ok:#0e9f6e;--red:#e11d48;--g:linear-gradient(135deg,#2563eb,#7c3aed);--sh:0 4px 18px rgba(79,70,229,.10)}
-:root[data-theme=dark]{--bg:#0b0f1a;--card:#141a2a;--tx:#eaedf7;--mu:#98a1bd;--pr:#818cf8;--bd:#232b42;--ok:#2dd4a0;--sh:0 4px 18px rgba(0,0,0,.35)}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;font-family:Poppins,system-ui,sans-serif;background:var(--bg);color:var(--tx);padding-bottom:84px}
-.wrap{max-width:640px;margin:0 auto;padding:12px}
-header{position:sticky;top:0;z-index:20;background:var(--g);color:#fff;padding:10px 14px;display:flex;align-items:center;gap:10px;font-weight:700;font-size:.95em;box-shadow:0 2px 14px rgba(79,70,229,.35)}
-header span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#th{padding:8px 12px;font-size:1.3em;background:rgba(255,255,255,.2);border-radius:99px}
-nav{position:fixed;bottom:0;left:0;right:0;z-index:20;display:flex;background:var(--card);border-top:1px solid var(--bd);padding:6px 8px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -4px 18px rgba(0,0,0,.08)}
-nav button{flex:1;background:none;color:var(--mu);display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 6px;font-size:.8em;font-weight:500;position:relative}
-nav button .ic{font-size:2.2em;line-height:1;filter:grayscale(1);opacity:.7;transition:.2s}
-nav button.on{color:var(--pr)}
-nav button.on .ic{filter:none;opacity:1;transform:translateY(-2px) scale(1.12)}
-nav .bd{position:absolute;top:0;left:55%}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:14px;margin-bottom:12px;box-shadow:var(--sh)}
-input,textarea,select{width:100%;padding:11px 13px;margin:4px 0;border:1px solid var(--bd);border-radius:12px;background:var(--bg);color:var(--tx);font:inherit;outline:none}
-input:focus,textarea:focus,select:focus{border-color:var(--pr)}
-button{padding:10px 16px;border:0;border-radius:12px;background:var(--g);color:#fff;font:inherit;font-weight:600;cursor:pointer;transition:transform .15s}
-button:active{transform:scale(.95)}button:disabled{opacity:.6}
-button.alt{background:var(--card);color:var(--tx);border:1px solid var(--bd);font-weight:500}
-.row{display:flex;gap:10px;align-items:center}.mu{color:var(--mu);font-size:.85em}
-.av{width:50px;height:50px;border-radius:50%;object-fit:cover;background:var(--g);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none}
-.av.big{width:92px;height:92px;font-size:2em;border:4px solid var(--card)}
-.chip{background:var(--bg);color:var(--pr);border-radius:99px;padding:1px 8px;font-size:.72em;font-weight:600;margin-left:6px}
-.mw{position:relative;margin:10px -14px 0}
-.media{display:block;width:100%;max-height:520px;object-fit:cover;background:#000}
-#pv .media{border-radius:12px;margin-top:8px}
-.heart{position:absolute;left:50%;top:50%;font-size:5em;animation:hb .8s ease forwards;pointer-events:none}
-@keyframes hb{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}100%{opacity:0;transform:translate(-50%,-90%) scale(1)}}
-.pop{animation:pop .35s}@keyframes pop{50%{transform:scale(1.35)}}
-.err{color:var(--red)}.okm{color:var(--ok)}
-.chat{height:360px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:6px}
-.b{max-width:80%;padding:8px 12px;border-radius:18px 18px 18px 4px;background:var(--bg);border:1px solid var(--bd)}
-.b.me{align-self:flex-end;background:var(--g);color:#fff;border:0;border-radius:18px 18px 4px 18px}
-.u{cursor:pointer}
-.bd{background:var(--red);color:#fff;border-radius:99px;padding:1px 7px;font-size:.75em;margin-left:4px;display:none}
-.cm .t{margin-top:6px}
-#v>*{animation:up .35s ease both}@keyframes up{from{opacity:0;transform:translateY(14px)}}
-.cover{height:110px;margin:-14px -14px 0;border-radius:20px 20px 0 0}
-.prof{margin-top:-46px;justify-content:center}
-.stories{display:flex;gap:12px;overflow-x:auto;padding:4px 2px 12px}
-.st{flex:none;text-align:center;width:84px;font-size:.78em;cursor:pointer}
-.ring{padding:3px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#ec4899,#7c3aed);display:inline-block}
-.ring.add{background:var(--bd)}
-.ring .av{width:72px;height:72px;border:3px solid var(--bg)}
-#sv{position:fixed;inset:0;z-index:50;background:#000;display:flex;flex-direction:column;justify-content:center;color:#fff}
-#sv img,#sv video{width:100%;max-height:78vh;object-fit:contain}
-#splash{position:fixed;inset:0;z-index:99;background:var(--g);display:flex;align-items:center;justify-content:center;transition:opacity .4s}
-#splash svg{animation:pulse 1.2s infinite}@keyframes pulse{50%{transform:scale(1.15)}}
-#splash.out{opacity:0}
-#sq{border-radius:99px;padding:13px 18px;margin:0 0 10px;font-size:1em}
-.act button{font-size:1.2em;padding:10px 20px}
-@media(prefers-reduced-motion:reduce){*{animation:none!important}}
-</style>
-</head>
-<body>
-<div id="splash"><svg width="84" height="84" viewBox="0 0 48 48"><rect width="48" height="48" rx="11" fill="#fff"/><text x="24" y="33" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-style="italic" font-size="24" fill="#4f46e5">MU</text></svg></div>
-<header>
-  <svg width="40" height="40" viewBox="0 0 48 48"><rect width="48" height="48" rx="11" fill="#fff"/><text x="24" y="33" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-style="italic" font-size="24" fill="#4f46e5">MU</text></svg>
-  <span>Meeting University of N'djamena</span>
-  <button id="th" aria-label="Changer de thème"></button>
-</header>
-<div class="wrap" id="app"></div>
+:root{--bg:#0d1030;--card:#171b45;--line:#272c63;--t:#eef0ff;--mut:#9aa0d6;--g:linear-gradient(135deg,#2f6bff,#8a4dff)}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--t);font:16px/1.4 system-ui,sans-serif;padding-bottom:84px}
+button,input,textarea,select{font:inherit;color:inherit}
+input,textarea,select{width:100%;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin:5px 0}
+.btn{background:var(--g);border:0;border-radius:14px;padding:12px 18px;font-weight:700;cursor:pointer}
+.ghost{background:none;border:1px solid var(--line);border-radius:12px;padding:6px 12px;cursor:pointer}
+.w{max-width:560px;margin:auto;padding:12px}
+.card{background:var(--card);border-radius:20px;padding:14px;margin:12px 0}
+.mut{color:var(--mut);font-size:14px}.row{display:flex;gap:10px;align-items:center}.sp{flex:1}
+h1,h2{font-weight:800}
+.av{width:44px;height:44px;border-radius:50%;background:var(--g);display:grid;place-items:center;font-weight:800;flex:none}
+nav{position:fixed;bottom:0;left:0;right:0;background:#10143a;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:none;border:0;font-size:30px;padding:12px 0;position:relative;opacity:.6}
+nav button.on{opacity:1}
+.dot{position:absolute;top:6px;right:22%;background:#ff4d6d;font-size:12px;border-radius:10px;padding:0 6px;color:#fff}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 0}.chips button{white-space:nowrap;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:8px 14px;cursor:pointer}.chips .on{background:var(--g);border:0}
+.st{display:flex;gap:12px;overflow-x:auto;padding:6px 0}.st div{text-align:center;font-size:12px;flex:none;width:68px}.st .av{width:62px;height:62px;border:3px solid #8a4dff;font-size:22px}
+.ic{font-size:26px;background:none;border:0;cursor:pointer;padding:4px 8px}
+.post img,.big{width:100%;border-radius:16px;margin:8px 0}
+.b{max-width:78%;padding:9px 13px;border-radius:18px;margin:5px 0;background:var(--card)}.me{margin-left:auto;background:var(--g)}
+.tag{background:var(--line);border-radius:10px;padding:2px 8px;font-size:12px}
+.bar{background:var(--line);border-radius:10px;overflow:hidden;margin:5px 0;cursor:pointer;position:relative;padding:8px}.bar i{position:absolute;inset:0 auto 0 0;background:#3b4bd8;opacity:.6}.bar span{position:relative}
+#ov{position:fixed;inset:0;background:#000d;display:none;place-items:center;z-index:9;padding:20px;text-align:center}
+#toast{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:var(--g);padding:10px 18px;border-radius:20px;display:none;z-index:10}
+</style></head><body><div id="toast"></div><div id="ov" onclick="this.style.display='none'"></div><div id="app"></div>
 <script>
-const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let tok=localStorage.getItem('t'),me=null,tab='feed',peer=null,timer=null,poll=null,reg=false,lastN=0,S={},lt=0;
-const $=s=>document.querySelector(s),app=$('#app');
-
-function setTh(t){document.documentElement.dataset.theme=t;localStorage.setItem('th',t);$('#th').textContent=t=='dark'?'☀️':'🌙';$('meta[name=theme-color]').content=t=='dark'?'#0b0f1a':'#4f46e5'}
-setTh(document.documentElement.dataset.theme);
-$('#th').onclick=()=>setTh(document.documentElement.dataset.theme=='dark'?'light':'dark');
-
-async function api(p,o={}){
-  o.headers={...(o.headers||{}),Authorization:'Bearer '+tok};
-  if(o.body&&!(o.body instanceof FormData)){o.headers['Content-Type']='application/json';o.body=JSON.stringify(o.body)}
-  const r=await fetch('/api'+p,o),d=await r.json().catch(()=>({}));
-  if(!r.ok)throw new Error(d.error||'Erreur');return d}
-const av=(u,big)=>u.avatar?`<img class="av ${big?'big':''}" src="${E(u.avatar)}">`:`<div class="av ${big?'big':''}">${E((u.name||'?')[0])}</div>`;
-const fmt=t=>new Date(t).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});
-const hue=s=>[...String(s||'')].reduce((a,c)=>a+c.charCodeAt(0),0)%360;
-const cover=u=>`<div class="cover" style="background:linear-gradient(135deg,hsl(${hue(u.name)},75%,50%),hsl(${(hue(u.name)+60)%360},75%,45%))"></div>`;
-
-function setBadge(n){const b=$('#bd');if(b){b.textContent=n;b.style.display=n?'inline-block':'none'}
-  document.title=(n?`(${n}) `:'')+"Meeting University of N'djamena"}
-function notify(m){try{if(Notification.permission!=='granted')return;
-  navigator.serviceWorker.ready.then(r=>r.showNotification(m.name,{body:m.text,icon:'/icon-192.png',tag:'msg'}))}catch{}}
-function startPoll(){clearInterval(poll);
-  const t=async()=>{try{const d=await api('/unread');setBadge(d.n);
-    if(d.n>lastN&&d.last&&!(tab=='ib'&&peer))notify(d.last);lastN=d.n}catch{}};
-  t();poll=setInterval(t,5000)}
-
-function authView(){
-  clearInterval(timer);clearInterval(poll);setBadge(0);
-  app.innerHTML=`<div class="card"><h3>${reg?'Créer mon compte':'Connexion'}</h3>
-  <form id="f">
-  ${reg?`<input name="name" placeholder="Nom complet" required>`:''}
-  <input name="email" type="email" placeholder="Email" required>
-  <input name="password" type="password" placeholder="Mot de passe (6 caractères min.)" required>
-  ${reg?`<input name="faculty" placeholder="Faculté / Filière">
-  <select name="level"><option value="">Niveau</option><option>Licence 1</option><option>Licence 2</option><option>Licence 3</option><option>Master 1</option><option>Master 2</option><option>Doctorat</option></select>
-  <input name="phone" placeholder="Téléphone (privé)">
-  <textarea name="bio" rows="2" placeholder="À propos de moi"></textarea>
-  <label class="mu">Photo de profil</label><input name="avatar" type="file" accept="image/*">`:''}
-  <p class="err" id="e"></p><button>${reg?'S\'inscrire':'Se connecter'}</button></form>
-  <p class="mu u" id="sw">${reg?'Déjà un compte ? Se connecter':'Pas de compte ? S\'inscrire'}</p></div>`;
-  $('#sw').onclick=()=>{reg=!reg;authView()};
-  $('#f').onsubmit=async e=>{e.preventDefault();const btn=e.target.querySelector('button');btn.disabled=true;
-    try{const fd=new FormData(e.target);
-      const d=await api(reg?'/register':'/login',{method:'POST',body:reg?fd:Object.fromEntries(fd)});
-      tok=d.token;me=d.me;localStorage.setItem('t',tok);main()}catch(x){$('#e').textContent=x.message;btn.disabled=false}}}
-
-function main(){
-  const IC={feed:'🏠',ib:'💬',me:'👤'};
-  app.innerHTML=`<nav>${[['feed','Fil'],['ib','Messages'],['me','Profil']].map(([k,l])=>
-    `<button class="${tab==k?'on':''}" data-t="${k}"><span class="ic">${IC[k]}</span>${l}${k=='ib'?'<span class="bd" id="bd"></span>':''}</button>`).join('')}</nav><div id="v"></div>`;
-  app.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
-    if('Notification' in window&&Notification.permission==='default')Notification.requestPermission();
-    tab=b.dataset.t;peer=null;main()});
-  clearInterval(timer);startPoll();
-  ({feed:feedView,ib:ibView,me:profView})[tab]()}
-
-async function like(x){
-  const d=await api('/posts/'+x.dataset.l+'/like',{method:'POST'});
-  x.innerHTML=(d.liked?'❤️':'🤍')+' '+d.n;x.classList.remove('pop');void x.offsetWidth;x.classList.add('pop')}
-function heart(m){const h=document.createElement('div');h.className='heart';h.textContent='❤️';m.appendChild(h);setTimeout(()=>h.remove(),800)}
-
-app.onclick=async e=>{
-  const g=a=>e.target.closest('['+a+']');let x;
-  try{
-    if(e.target.matches('.mw img')){const n=Date.now();
-      if(n-lt<350){lt=0;const b=e.target.closest('.card').querySelector('[data-l]');
-        heart(e.target.parentNode);if(b.textContent.includes('🤍'))await like(b)}else lt=n;return}
-    if(x=g('data-d')){await api('/posts/'+x.dataset.d,{method:'DELETE'});$('#p'+x.dataset.d).remove()}
-    else if(x=g('data-l')){await like(x)}
-    else if(x=g('data-c')){openCm(x.dataset.c)}
-    else if(x=g('data-cs')){const id=x.dataset.cs,v=$('#ci'+id).value.trim();if(!v)return;
-      await api('/posts/'+id+'/comments',{method:'POST',body:{text:v}});$('#cm'+id).innerHTML='';openCm(id)}
-    else if(x=g('data-p')){userView(x.dataset.p)}
-    else if(x=g('data-s')){story(x.dataset.s)}
-    else if(g('data-add')){$('#sf').click()}
-  }catch(err){alert(err.message)}};
-
-async function openCm(id){
-  const c=$('#cm'+id);if(c.innerHTML){c.innerHTML='';return}
-  const cs=await api('/posts/'+id+'/comments'),b=document.querySelector('[data-c="'+id+'"]');
-  if(b)b.textContent='💬 '+cs.length;
-  c.innerHTML=cs.map(m=>`<div class="t"><b class="u" data-p="${m.uid}">${E(m.name)}</b> ${E(m.text)} <span class="mu">${fmt(m.ts)}</span></div>`).join('')+
-    `<div class="row"><input id="ci${id}" placeholder="Votre commentaire…"><button data-cs="${id}">Envoyer</button></div>`}
-
-const postHtml=p=>`<div class="card" id="p${p.id}"><div class="row"><div class="row u" data-p="${p.uid}">${av(p)}<div><b>${E(p.name)}</b>${p.faculty?`<span class="chip">${E(p.faculty)}</span>`:''}<div class="mu">${fmt(p.ts)}</div></div></div>
-  ${p.uid==me.id?`<button class="alt" style="margin-left:auto" data-d="${p.id}">Suppr.</button>`:''}</div>
-  <p>${E(p.text)}</p>${p.type=='image'?`<div class="mw"><img class="media" src="${E(p.media)}"></div>`:p.type=='video'?`<div class="mw"><video class="media" controls src="${E(p.media)}"></video></div>`:''}
-  <div class="row act" style="margin-top:10px"><button class="alt" data-l="${p.id}">${p.liked?'❤️':'🤍'} ${p.likes}</button><button class="alt" data-c="${p.id}">💬 ${p.ncom}</button></div>
-  <div class="cm" id="cm${p.id}"></div></div>`;
-
-function buildStories(ps){
-  const lim=Date.now()-864e5;S={};
-  ps.filter(p=>p.media&&new Date(p.ts)>lim).reverse().forEach(p=>(S[p.uid]=S[p.uid]||{u:p,l:[]}).l.push(p));
-  $('#s').innerHTML=`<div class="st" data-add="1"><span class="ring add"><div class="av" style="background:var(--bg);color:var(--pr);font-size:2em">＋</div></span><div>Ma story</div></div>`+
-    Object.entries(S).map(([id,s])=>`<div class="st" data-s="${id}"><span class="ring">${av(s.u)}</span><div>${E(s.u.name.split(' ')[0])}</div></div>`).join('')}
-
-function story(id){
-  const s=S[id];let i=0,tm;if(!s)return;
-  const o=document.createElement('div');o.id='sv';document.body.appendChild(o);
-  const close=()=>{clearTimeout(tm);o.remove()};
-  const show=()=>{clearTimeout(tm);if(i<0)i=0;if(i>=s.l.length)return close();const p=s.l[i];
-    o.innerHTML=`<div class="row" style="padding:12px;position:absolute;top:0;left:0;right:0;z-index:2;background:linear-gradient(#000a,transparent)">${av(p)}<b style="flex:1">${E(p.name)}</b><span>${i+1}/${s.l.length}</span><button id="x" style="background:none;font-size:1.4em">✕</button></div>`+
-      (p.type=='video'?`<video autoplay playsinline src="${E(p.media)}"></video>`:`<img src="${E(p.media)}">`)+`<p style="padding:12px;text-align:center">${E(p.text)}</p>`;
-    o.querySelector('#x').onclick=e=>{e.stopPropagation();close()};
-    const v=o.querySelector('video');if(v)v.onended=()=>{i++;show()};else tm=setTimeout(()=>{i++;show()},5000)};
-  o.onclick=e=>{i+=e.clientX<innerWidth/3?-1:1;show()};show()}
-
-async function feedView(){
-  $('#v').innerHTML=`<input id="sq" type="search" placeholder="🔍 Rechercher une publication, un étudiant…"><input id="sf" type="file" accept="image/*,video/*" hidden><div class="stories" id="s"></div><div class="card"><textarea id="t" rows="2" placeholder="Quoi de neuf sur le campus ?"></textarea>
-  <input id="m" type="file" accept="image/*,video/*"><div id="pv"></div><p class="err" id="e"></p><button id="go">Publier</button></div>
-  <div id="l"></div><button class="alt" id="more" style="width:100%;display:none">Voir plus</button>`;
-  const flt=()=>{const q=$('#sq').value.trim().toLowerCase();document.querySelectorAll('#l .card').forEach(c=>c.style.display=c.textContent.toLowerCase().includes(q)?'':'none')};
-  $('#sq').oninput=flt;
-  $('#sf').onchange=async e=>{const f=e.target.files[0];if(!f)return;const l=document.querySelector('[data-add] div:last-child');if(l)l.textContent='Envoi…';
-    const fd=new FormData();fd.append('text','✨');fd.append('media',f);
-    try{await api('/posts',{method:'POST',body:fd});feedView()}catch(x){alert(x.message);feedView()}};
-  $('#m').onchange=e=>{const f=e.target.files[0];
-    $('#pv').innerHTML=!f?'':f.type.startsWith('video')?`<video class="media" controls src="${URL.createObjectURL(f)}"></video>`:`<img class="media" src="${URL.createObjectURL(f)}">`};
-  $('#go').onclick=async()=>{const fd=new FormData();fd.append('text',$('#t').value);if($('#m').files[0])fd.append('media',$('#m').files[0]);
-    try{$('#go').disabled=true;$('#go').textContent='Publication…';await api('/posts',{method:'POST',body:fd});feedView()}
-    catch(x){$('#e').textContent=x.message;$('#go').disabled=false;$('#go').textContent='Publier'}};
-  let before=0,first=true;
-  const load=async()=>{const ps=await api('/posts'+(before?'?before='+before:''));
-    if(first){buildStories(ps);if(!ps.length)$('#l').innerHTML='<p class="mu">Aucune publication. Écris la première !</p>'}
-    first=false;$('#l').insertAdjacentHTML('beforeend',ps.map(postHtml).join(''));flt();
-    if(ps.length)before=ps[ps.length-1].ts;$('#more').style.display=ps.length==20?'block':'none'};
-  $('#more').onclick=load;load()}
-
-async function ibView(){
-  if(peer)return chatView();
-  $('#v').innerHTML=`<input id="q" placeholder="Rechercher un étudiant (nom, filière)…"><div id="l"></div>`;
-  let tm;
-  const draw=async()=>{const us=await api('/users?q='+encodeURIComponent($('#q').value));
-    $('#l').innerHTML=us.map(u=>`<div class="card row u" data-u="${u.id}">${av(u)}<div style="flex:1"><b>${E(u.name)}</b><div class="mu">${E(u.faculty)} ${E(u.level)}</div></div>
-      ${u.unread?`<span class="bd" style="display:inline-block">${u.unread}</span>`:''}<button class="alt" data-p="${u.id}">Profil</button></div>`).join('')||'<p class="mu">Aucun étudiant trouvé.</p>';
-    app.querySelectorAll('[data-u]').forEach(c=>c.onclick=e=>{if(e.target.closest('[data-p]'))return;peer=us.find(u=>u.id==c.dataset.u);chatView()})};
-  $('#q').oninput=()=>{clearTimeout(tm);tm=setTimeout(draw,300)};draw()}
-
-function chatView(){
-  $('#v').innerHTML=`<div class="card"><div class="row"><button class="alt" id="bk">←</button><div class="row u" data-p="${peer.id}">${av(peer)}<b>${E(peer.name)}</b></div></div>
-  <div class="chat" id="c"></div><div class="row"><input id="m" placeholder="Votre message…"><button id="s">Envoyer</button></div></div>`;
-  $('#bk').onclick=()=>{peer=null;clearInterval(timer);ibView()};
-  const load=async()=>{const ms=await api('/msgs/'+peer.id),c=$('#c');if(!c)return;
-    const bot=c.scrollTop+c.clientHeight>=c.scrollHeight-20;
-    c.innerHTML=ms.map(m=>`<div class="b ${m.frm==me.id?'me':''}">${E(m.text)}<div class="mu" style="color:inherit;opacity:.7">${fmt(m.ts)}</div></div>`).join('');
-    if(bot)c.scrollTop=c.scrollHeight};
-  const send=async()=>{const t=$('#m').value.trim();if(!t)return;$('#m').value='';await api('/msgs/'+peer.id,{method:'POST',body:{text:t}});load()};
-  $('#s').onclick=send;$('#m').onkeydown=e=>{if(e.key=='Enter')send()};
-  load().then(()=>{$('#c').scrollTop=1e9});timer=setInterval(load,3000)}
-
-async function userView(id){
-  clearInterval(timer);
-  if(id==me.id){tab='me';peer=null;return main()}
-  const u=await api('/users/'+id);
-  $('#v').innerHTML=`<div class="card" style="text-align:center">${cover(u)}<div class="row prof">${av(u,1)}</div>
-  <button class="alt" id="bk" style="position:absolute;margin-top:-140px;left:26px">←</button>
-  <h3 style="margin:6px 0 0">${E(u.name)}</h3>
-  <p class="mu" style="margin:2px">${E(u.faculty)} ${E(u.level)}</p><p>${u.bio?E(u.bio):'<span class="mu">Pas encore de présentation.</span>'}</p>
-  <button id="dm">Envoyer un message</button></div>`;
-  $('#bk').onclick=()=>main();$('#dm').onclick=()=>{tab='ib';peer=u;main()}}
-
-function profView(){
-  $('#v').innerHTML=`<div class="card" style="text-align:center">${cover(me)}<div class="row prof">${av(me,1)}</div>
-  <h3 style="margin:6px 0 0">${E(me.name)}</h3><p class="mu" style="margin:2px">${E(me.faculty)} ${E(me.level)}</p><p class="mu">${E(me.email)}</p></div>
-  <div class="card"><b>Modifier mon profil</b>
-  <form id="f"><input name="name" value="${E(me.name)}" placeholder="Nom">
-  <input name="faculty" value="${E(me.faculty)}" placeholder="Faculté / Filière">
-  <input name="level" value="${E(me.level)}" placeholder="Niveau">
-  <input name="phone" value="${E(me.phone)}" placeholder="Téléphone (privé)">
-  <textarea name="bio" rows="3" placeholder="À propos de moi">${E(me.bio)}</textarea>
-  <input name="avatar" type="file" accept="image/*"><p class="err" id="e"></p>
-  <button>Enregistrer</button> <button type="button" class="alt" id="out">Déconnexion</button></form></div>
-  <div class="card"><b>Changer mon mot de passe</b>
-  <form id="pf"><input name="old" type="password" placeholder="Ancien mot de passe" required>
-  <input name="new" type="password" placeholder="Nouveau mot de passe (6 caractères min.)" required>
-  <p id="pe"></p><button>Changer le mot de passe</button></form></div>`;
-  $('#f').onsubmit=async e=>{e.preventDefault();try{me=await api('/me',{method:'PUT',body:new FormData(e.target)});profView()}catch(x){$('#e').textContent=x.message}};
-  $('#pf').onsubmit=async e=>{e.preventDefault();const p=$('#pe');
-    try{await api('/password',{method:'POST',body:Object.fromEntries(new FormData(e.target))});e.target.reset();p.className='okm';p.textContent='Mot de passe modifié.'}
-    catch(x){p.className='err';p.textContent=x.message}};
-  $('#out').onclick=()=>{localStorage.removeItem('t');tok=me=null;lastN=0;authView()}}
-
-const hide=()=>{const s=$('#splash');if(!s)return;s.classList.add('out');setTimeout(()=>s.remove(),400)};
-(async()=>{
-  if(tok)try{me=await api('/me');main();setTimeout(hide,700);return}catch{}
-  authView();setTimeout(hide,700)})();
-</script>
-</body>
-</html>
+const $=s=>document.querySelector(s),E=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let tok=localStorage.t||'',me,view='home',F={type:'',group:'',saved:0},cur=null,un=0,eco=localStorage.eco!=='0',ptimer,pun=-1,rec,chunks;
+const api=async(n,b={})=>{const r=await fetch('/api/'+n,{method:'POST',headers:{'Content-Type':'application/json','x-token':tok},body:JSON.stringify(b)});if(r.status===401){localStorage.t=tok='';return render()}return r.json()};
+const toast=m=>{const t=$('#toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2500)};
+const ago=t=>{const m=(Date.now()-t)/6e4|0;return m<1?"à l'instant":m<60?m+' min':m<1440?(m/60|0)+' h':(m/1440|0)+' j'};
+const av=n=>`<div class="av">${E(n[0]||'?').toUpperCase()}</div>`;
+const vb=v=>v?' ✅':'';
+function img(file){return new Promise(ok=>{const r=new FileReader();r.onload=()=>{if(!eco)return ok(r.result);const i=new Image();i.onload=()=>{const k=Math.min(1,800/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.6))};i.src=r.result};r.readAsDataURL(file)})}
+const pick=()=>new Promise(ok=>{const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=()=>i.files[0]&&img(i.files[0]).then(ok);i.click()});
+function nav(){return`<nav>${[['home','🏠'],['search','🔍'],['new','➕'],['msg','💬'],['me','👤']].map(([v,i])=>`<button class="${view===v?'on':''}" onclick="go('${v}')">${i}${v==='msg'&&un?`<span class="dot">${un}</span>`:''}</button>`).join('')}</nav>`}
+function go(v,c){view=v;cur=c||null;render()}
+async function render(){
+if(!tok){$('#app').innerHTML=authHTML();return}
+if(!me){me=await api('me');if(!me||!me.id)return}
+let h='';
+if(view==='home')h=await home();else if(view==='search')h=searchV();else if(view==='new')h=newV();else if(view==='msg')h=cur?await convo():await chats();else h=await prof(cur||me.id);
+$('#app').innerHTML=`<div class="w">${h}</div>`+nav();
+if(view==='msg'&&cur){const m=$('#ml');m&&(m.scrollTop=1e9,scrollTo(0,1e9))}
+clearInterval(ptimer);ptimer=setInterval(tick,3000);
+}
+function authHTML(){const reg=window.reg;return`<div class="w"><h1 style="margin-top:40px;font-size:30px">Meeting University of N'djamena</h1><p class="mut">Le réseau des étudiants</p><div class="card">
+<input id="n" placeholder="Nom complet">${reg?'<input id="f" placeholder="Filière (ex : Droit L2)"><input id="s" placeholder="Réponse secrète (ex : ville de naissance)">':''}
+<input id="p" type="password" placeholder="Mot de passe">
+<button class="btn" style="width:100%;margin-top:8px" onclick="auth()">${reg?'Créer mon compte':'Se connecter'}</button>
+<p class="mut" style="margin-top:12px" onclick="reg=!reg;render()"><u>${reg?'J\'ai déjà un compte':'Créer un compte'}</u></p>
+${reg?'':'<p class="mut" style="margin-top:8px" onclick="forgot()"><u>Mot de passe oublié</u></p>'}</div></div>`}
+async function auth(){const r=await api(window.reg?'reg':'login',{name:$('#n').value,pass:$('#p').value,filiere:$('#f')?.value,secret:$('#s')?.value});if(r.e)return toast(r.e);localStorage.t=tok=r.t;me=null;view='home';Notification&&Notification.requestPermission&&Notification.requestPermission();render()}
+async function forgot(){const n=$('#n').value||prompt('Ton nom'),s=prompt('Ta réponse secrète'),p=prompt('Nouveau mot de passe');if(!n||!s||!p)return;const r=await fetch('/api/reset',{method:'POST',body:JSON.stringify({name:n,secret:s,pass:p})}).then(r=>r.json());toast(r.e||'Mot de passe changé')}
+async function home(){const[st,ps]=await Promise.all([api('stories'),api('feed',{type:F.type,group:F.group,saved:F.saved})]);
+const T=[['','Tout'],['annonce','📢 Annonces'],['cours','📚 Cours'],['event','🎉 Événements'],['poll','📊 Sondages'],['vente','🛒 Petites annonces']];
+return`<h2>Accueil</h2><div class="st"><div onclick="story()"><div class="av" style="border-style:dashed">＋</div>Mon statut</div>${st.map(s=>`<div onclick='viewSt(${JSON.stringify(s).replace(/'/g,"&#39;")})'>${av(s.name)}${E(s.name.split(' ')[0])}</div>`).join('')}</div>
+<div class="chips">${T.map(([v,l])=>`<button class="${F.type===v&&!F.saved?'on':''}" onclick="F.type='${v}';F.saved=0;render()">${l}</button>`).join('')}<button class="${F.saved?'on':''}" onclick="F.saved=1;render()">🔖 Favoris</button></div>
+<div class="chips"><button class="${F.group?'':'on'}" onclick="F.group='';render()">Toutes les filières</button><button class="${F.group?'on':''}" onclick="F.group='${E(me.filiere)}';render()">Ma filière : ${E(me.filiere)}</button></div>
+${ps.map(postH).join('')||'<p class="mut card">Aucune publication ici. Utilise ➕ pour publier.</p>'}`}
+function postH(p){const sv=me.saved.includes(p.id),tot=p.opts.reduce((a,o)=>a+o.v.length,0),L={annonce:'📢 Annonce',cours:'📚 Cours',event:'🎉 Événement',poll:'📊 Sondage',vente:'🛒 Petite annonce'}[p.type];
+return`<div class="card post"><div class="row" onclick="go('me','${p.by}')">${av(p.name)}<div><b>${E(p.name)}</b><div class="mut">${ago(p.at)}${p.group?' · '+E(p.group):''}</div></div></div>
+${L?`<p style="margin-top:8px"><span class="tag">${L}</span>${p.date?` <span class="tag">📅 ${E(p.date)}</span>`:''}</p>`:''}
+<p style="margin-top:8px;white-space:pre-wrap">${E(p.text)}</p>${p.img?`<img src="${p.img}">`:''}
+${p.opts.map((o,i)=>`<div class="bar" onclick="api('vote',{id:'${p.id}',i:${i}}).then(render)"><i style="width:${tot?o.v.length/tot*100:0}%"></i><span>${E(o.t)} · ${o.v.length}</span></div>`).join('')}
+<div class="row"><button class="ic" onclick="api('like',{id:'${p.id}'}).then(render)">${p.likes.includes(me.id)?'❤️':'🤍'}</button>${p.likes.length}<button class="ic" onclick="cm('${p.id}')">💬</button>${p.com.length}<span class="sp"></span><button class="ic" onclick="api('save',{id:'${p.id}'}).then(()=>{me=null;render()})">${sv?'🔖':'📑'}</button><button class="ic" onclick="rep('${p.by}')">🚩</button></div>
+${p.com.map(c=>`<p class="mut"><b>${E(c.name)}</b> ${E(c.text)}</p>`).join('')}</div>`}
+async function cm(i){const t=prompt('Ton commentaire');t&&(await api('comment',{id:i,text:t}),render())}
+async function rep(i){const t=prompt('Pourquoi signaler ? (spam, harcèlement…)');t&&(await api('report',{target:i,why:t}),toast('Signalement envoyé'))}
+async function story(){const t=prompt('Texte du statut (vide = photo seule)')||'';const i=confirm('Ajouter une photo ?')?await pick():'';(t||i)&&(await api('story',{text:t,img:i}),toast('Statut publié (24 h)'),render())}
+function viewSt(s){const o=$('#ov');o.innerHTML=`<div><b>${E(s.name)}</b> <span class="mut">${ago(s.at)}</span>${s.img?`<img class="big" src="${s.img}">`:''}<h2 style="margin-top:14px">${E(s.text)}</h2></div>`;o.style.display='grid'}
+function searchV(){return`<h2>Recherche</h2><input id="q" placeholder="Étudiant, filière ou mot…" oninput="srch(this.value)"><div id="r"></div>`}
+let sT;function srch(q){clearTimeout(sT);sT=setTimeout(async()=>{if(!q)return $('#r').innerHTML='';const[u,p]=await Promise.all([api('users',{q}),api('feed',{q})]);$('#r').innerHTML=u.map(x=>`<div class="card row" onclick="go('me','${x.id}')">${av(x.name)}<div><b>${E(x.name)}${vb(x.v)}</b><div class="mut">${E(x.filiere)}</div></div></div>`).join('')+p.map(postH).join('')||'<p class="mut">Aucun résultat</p>'},300)}
+let draft={};
+function newV(){return`<h2>Publier</h2><div class="card"><select id="ty"><option value="post">Publication</option><option value="annonce">📢 Annonce</option><option value="cours">📚 Cours / document</option><option value="event">🎉 Événement</option><option value="poll">📊 Sondage</option><option value="vente">🛒 Petite annonce</option></select>
+<textarea id="tx" rows="4" placeholder="Écris ici…"></textarea><input id="dt" placeholder="Date de l'événement (ex : 20 nov. à 15h)"><textarea id="op" rows="3" placeholder="Sondage : une option par ligne"></textarea>
+<label class="row"><input type="checkbox" id="gp" style="width:auto"> Réserver à ma filière (${E(me.filiere)})</label>
+<div id="pv"></div><div class="row"><button class="ghost" onclick="pickP()">📷 Photo</button><span class="sp"></span><button class="btn" onclick="pub()">Publier</button></div></div>`}
+async function pickP(){draft.img=await pick();$('#pv').innerHTML=`<img class="big" src="${draft.img}">`}
+async function pub(){const r=await api('post',{type:$('#ty').value,text:$('#tx').value,date:$('#dt').value,img:draft.img,group:$('#gp').checked?me.filiere:'',opts:$('#op').value.split('\n').filter(x=>x.trim())});if(r.e)return toast(r.e);draft={};toast('Publié');go('home')}
+async function chats(){const c=await api('chats'),u=await api('users',{q:''});
+return`<h2>Messages</h2>${c.map(x=>`<div class="card row" onclick="go('msg','${x.id}')">${av(x.name)}<div class="sp"><b>${E(x.name)}</b><div class="mut">${E(x.last).slice(0,40)}</div></div>${x.un?`<span class="dot" style="position:static">${x.un}</span>`:''}</div>`).join('')}
+<p class="mut" style="margin-top:16px">Écrire à un étudiant</p><div class="chips">${u.slice(0,15).map(x=>`<button onclick="go('msg','${x.id}')">${E(x.name)}</button>`).join('')}</div>`}
+async function convo(){const r=await api('convo',{with:cur}),u=await api('user',{id:cur});
+return`<div class="row"><button class="ic" onclick="go('msg')">⬅️</button>${av(u.name||'?')}<div><b>${E(u.name)}${vb(u.v)}</b><div class="mut" id="ty">${r.ty?"en train d'écrire…":''}</div></div></div><div id="ml" style="padding:10px 0;min-height:60vh">${r.m.map(m=>`<div class="b ${m.from===me.id?'me':''}">${m.audio?`<audio controls src="${m.audio}" style="max-width:100%"></audio>`:E(m.text)}${m.from===me.id?`<div class="mut" style="text-align:right;font-size:11px">${m.seen?'vu ✓✓':'envoyé ✓'}</div>`:''}</div>`).join('')}</div>
+<div class="row" style="position:sticky;bottom:80px;background:var(--bg);padding:6px 0"><input id="mt" placeholder="Message…" oninput="api('typing',{to:cur})" onkeydown="event.key==='Enter'&&snd()"><button class="ic" id="mic" onclick="mic()">🎤</button><button class="ic" onclick="snd()">➤</button></div>`}
+async function snd(a){const t=$('#mt')?.value;if(!t&&!a)return;await api('send',{to:cur,text:a?'':t,audio:a||''});render()}
+async function mic(){if(rec&&rec.state==='recording'){rec.stop();return}try{const s=await navigator.mediaDevices.getUserMedia({audio:true});chunks=[];rec=new MediaRecorder(s);rec.ondataavailable=e=>chunks.push(e.data);rec.onstop=()=>{s.getTracks().forEach(t=>t.stop());$('#mic').textContent='🎤';const f=new FileReader();f.onload=()=>snd(f.result);f.readAsDataURL(new Blob(chunks,{type:rec.mimeType}))};rec.start();$('#mic').textContent='⏹️';toast('Enregistrement… touche ⏹️ pour envoyer')}catch(e){toast('Micro refusé')}}
+async function prof(i){const u=i===me.id?{...me,posts:0}:await api('user',{id:i}),ps=await api('feed',{by:i}),mine=i===me.id,fl=me.following.includes(i);
+return`<div class="card" style="text-align:center"><div class="av" style="width:84px;height:84px;font-size:34px;margin:auto">${E(u.name[0]).toUpperCase()}</div><h2 style="margin-top:8px">${E(u.name)}${vb(u.v)}</h2><p class="mut">${E(u.filiere)} · ${u.fol} abonné(s)</p><p>${E(u.bio)}</p>
+<div class="row" style="justify-content:center;margin-top:10px;flex-wrap:wrap">${mine?`<button class="ghost" onclick="edit()">✏️ Modifier</button><button class="ghost" onclick="chpw()">🔑 Mot de passe</button><button class="ghost" onclick="eco=!eco;localStorage.eco=eco?1:0;toast(eco?'Économie de données activée':'Photos en qualité maximale')">📶 Économie de données</button><button class="ghost" onclick="localStorage.t=tok='';me=null;render()">Déconnexion</button>`:`<button class="btn" onclick="api('follow',{id:'${i}'}).then(()=>{me=null;render()})">${fl?'Abonné ✓':'S\'abonner'}</button><button class="ghost" onclick="go('msg','${i}')">💬 Message</button><button class="ghost" onclick="if(confirm('Bloquer ?'))api('block',{id:'${i}'}).then(()=>{me=null;go('home')})">🚫</button>`}</div></div>${ps.map(postH).join('')}`}
+async function edit(){const b=prompt('Ta bio',me.bio),f=prompt('Ta filière',me.filiere);if(b===null)return;await api('bio',{bio:b,filiere:f});me=null;render()}
+async function chpw(){const o=prompt('Ancien mot de passe'),n=prompt('Nouveau mot de passe');if(!o||!n)return;const r=await api('pass',{old:o,pass:n});toast(r.e||'Mot de passe changé')}
+async function tick(){if(!tok||document.hidden&&0)return;const p=await api('poll');if(!p||p.un===undefined)return;un=p.un;if(pun>=0&&p.un>pun&&p.last){toast('💬 '+p.last.name+' : '+p.last.text.slice(0,40));try{new Notification(p.last.name,{body:p.last.text})}catch(e){}}pun=p.un;
+if(view==='msg'&&cur&&document.activeElement?.id!=='mt')render();else if(view==='msg'&&!cur)render();else if(view==='home'&&!document.querySelector('#ov[style*=grid]'))render();else{const n=document.querySelector('nav .dot');n&&(n.textContent=un)}}
+render();
+</script></body></html>
