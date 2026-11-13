@@ -1,4 +1,4 @@
-Const http=require('http'),fs=require('fs'),path=require('path'),crypto=require('crypto'),zlib=require('zlib'),{promisify}=require('util');
+const http=require('http'),fs=require('fs'),path=require('path'),crypto=require('crypto'),zlib=require('zlib'),{promisify}=require('util');
 const scrypt=promisify(crypto.scrypt);
 let Pool=null;try{Pool=require('pg').Pool}catch(e){}
 const pool=process.env.DATABASE_URL&&Pool?new Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:false},max:4}):null;
@@ -203,6 +203,9 @@ body=Buffer.isBuffer(body)?body:Buffer.from(body);
 if(body.length>600&&/gzip/.test(q.headers['accept-encoding']||'')){zlib.gzip(body,{level:1},(e,z)=>{if(e){r.writeHead(code,h);return r.end(body)}h['Content-Encoding']='gzip';r.writeHead(code,h);r.end(z)})}
 else{r.writeHead(code,h);r.end(body)}};
 
+let INDEX;try{INDEX=fs.readFileSync(path.join(__dirname,'public','index.html'))}catch(e){INDEX=Buffer.from('Erreur')}
+const INDEXGZ=zlib.gzipSync(INDEX,{level:9}),ETAG='W/"'+sha(INDEX).slice(0,16)+'"';
+
 const srv=http.createServer((q,r)=>{
 const ip=String(q.headers['cf-connecting-ip']||(q.headers['x-forwarded-for']||'').split(',')[0]||q.socket.remoteAddress||'').trim();
 if(q.url==='/health'){r.writeHead(200,{'Content-Type':'text/plain','Cache-Control':'no-store'});return r.end('ok')}
@@ -234,8 +237,11 @@ const x=UB.get(q.url.slice(7).split('?')[0]);
 if(!x||!x.photo){r.writeHead(404);return r.end()}
 getMedia(x.photo).then(m=>{if(!m){r.writeHead(404);return r.end()}r.writeHead(200,{'Content-Type':m.mime,'Content-Length':m.data.length,'Cache-Control':'public,max-age=300',...SEC});r.end(m.data)}).catch(()=>{r.writeHead(500);r.end()});return}
 
-r.writeHead(302,{'Location':'/'});r.end()});
+if(q.headers['if-none-match']===ETAG){r.writeHead(304,{ETag:ETAG,...SEC});return r.end()}
+const gz=/gzip/.test(q.headers['accept-encoding']||'');
+r.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache',ETag:ETAG,'Vary':'Accept-Encoding',...(gz?{'Content-Encoding':'gzip'}:{}),...SEC});
+r.end(gz?INDEXGZ:INDEX)});
+
 srv.keepAliveTimeout=65e3;srv.headersTimeout=66e3;
 
 load().then(()=>srv.listen(process.env.PORT||3000,()=>console.log('Serveur prêt'))).catch(e=>{console.error('Impossible de démarrer :',e.message);process.exit(1)});
- 
