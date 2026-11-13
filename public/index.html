@@ -47,4 +47,135 @@ nav button.on{color:#a78bff}
 </style>
 </head>
 <body>
-<div id="toast"></div><div id="ov"></div><div id="app"><div class="w"><h1 style="margin-top:40px">Meeting University of N'djamena</h1><p class="
+<div id="toast"></div><div id="ov"></div><div id="app"><div class="w"><h1 style="margin-top:40px">Meeting University of N'djamena</h1><p class="mut">Chargement...</p><div class="card"><div class="skel" style="height:20px"></div><div class="skel" style="height:120px;margin-top:10px"></div></div></div></div>
+<script>
+if(localStorage.theme==='dark') document.documentElement.setAttribute('data-theme','dark');
+window.onerror=function(m){try{var t=document.getElementById('toast');t.textContent='Erreur : '+m;t.style.display='block';setTimeout(function(){t.style.display='none'},3000)}catch(e){}};
+var reg=false;
+const $=s=>document.querySelector(s);
+const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let tok=localStorage.t||'',me=null,view='home',F={type:'',group:'',saved:0},cur=null,un=0,eco=localStorage.eco!=='0',ptimer=null,pun=-1,rec=null,chunks=[],feedLimit=10,feedCache=[],storiesCache=[];
+const api=async(n,b={})=>{try{const r=await fetch('/api/'+n,{method:'POST',headers:{'Content-Type':'application/json','x-token':tok},body:JSON.stringify(b)});if(r.status===401){localStorage.t=tok='';me=null;return{}}return await r.json()}catch(e){toast('Serveur en réveil, réessaie dans 30 sec');return{e:'Serveur en réveil'}}};
+const toast=m=>{const t=$('#toast');if(!t)return;t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2500)};
+const ago=t=>{const m=(Date.now()-t)/6e4|0;return m<1?"à l'instant":m<60?m+' min':m<1440?(m/60|0)+' h':(m/1440|0)+' j'};
+const av=(n,id,st='')=>`<div class="av" style="${st}">${E((n||'?')[0]).toUpperCase()}${id?`<img src="/photo/${id}?v=${localStorage.pv||0}" onerror="this.remove()">`:''}</div>`;
+const vb=v=>v?' <span class="vk">✓</span>':'';
+const IC={home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>',search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',new:'<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>',msg:'<path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12z"/>',me:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>',heart:'<path d="M12 20.5S3 15 3 9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6-9 11.5-9 11.5z"/>',bm:'<path d="M6 3h12v18l-6-4-6 4z"/>',flag:'<path d="M5 21V4h12l-2 4 2 4H5"/>',mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',send:'<path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4z"/>',back:'<path d="M15 5l-7 7 7 7"/>',stop:'<rect x="6" y="6" width="12" height="12" rx="2"/>',image:'<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/>',file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',x:'<path d="M6 6l12 12M18 6 6 18"/>'};
+const IE={home:'🏡',search:'🔎',new:'✨',msg:'💬',me:'😎',heart:'🤍',bm:'📌',flag:'🚩',mic:'🎙️',send:'🚀',back:'⬅️',stop:'⏹️',image:'🖼️',file:'📄',x:'✖️'};
+function I(name,size,on){if(IC[name]) return `<svg width="${size||22}" height="${size||22}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="fill:${on?'currentColor':'none'}">${IC[name]}</svg>`;return `<span style="font-size:${size||22}px">${IE[name]||'•'}</span>`}
+function toggleTheme(){const d=document.documentElement.getAttribute('data-theme')==='dark';if(d){document.documentElement.removeAttribute('data-theme');localStorage.theme='light'}else{document.documentElement.setAttribute('data-theme','dark');localStorage.theme='dark'}render()}
+function nav(){return `<nav>${['home','search','new','msg','me'].map(v=>`<button class="${view===v?'on':''}" onclick="go('${v}')">${I(v,24)}${v==='msg'&&un?`<span class="dot">${un}</span>`:''}</button>`).join('')}</nav>`}
+function go(v,c){view=v;cur=c||null;try{history.pushState({view:v,cur:cur},'','#'+v+(c?'/'+c:''))}catch(e){}render()}
+window.addEventListener('popstate',e=>{if(e.state){view=e.state.view||'home';cur=e.state.cur||null;render()}});
+function skeleton(){return `<div class="card"><div class="skel" style="height:44px;width:44px;border-radius:50%"></div><div class="skel" style="height:16px;margin-top:12px"></div><div class="skel" style="height:140px;margin-top:10px"></div></div><div class="card"><div class="skel" style="height:16px"></div><div class="skel" style="height:140px;margin-top:10px"></div></div>`}
+async function render(){
+  try{
+    if(!tok){$('#app').innerHTML=authHTML();return}
+    if(!me){me=await api('me');if(!me||!me.id){tok='';localStorage.t='';me=null;$('#app').innerHTML=authHTML();return}}
+    let h='';
+    if(view==='home'){h=await home()}else if(view==='search'){h=searchV()}else if(view==='new'){h=newV()}else if(view==='msg'){h=cur?await convo():await chats()}else{h=await prof(cur||me.id)}
+    $('#app').innerHTML=`<div class="w">${h}</div>`+nav();
+    if(view==='msg'&&cur){const m=$('#ml');if(m){m.scrollTop=1e9}}
+    clearInterval(ptimer);ptimer=setInterval(tick,10000);
+  }catch(e){console.error(e);$('#app').innerHTML=authHTML()}
+}
+function authHTML(){return `<div class="w"><div class="topbar"><h1 style="margin-top:30px;font-size:30px">Meeting University<br>of N'djamena</h1><button class="ghost" onclick="toggleTheme()">🌙</button></div><p class="mut">Le réseau des étudiants</p><div class="card"><input id="n" placeholder="Nom complet">${reg?'<input id="f" placeholder="Filière (ex : Droit L2)"><input id="s" placeholder="Réponse secrète">':''}<input id="p" type="password" placeholder="Mot de passe"><button class="btn" style="width:100%;margin-top:8px" onclick="auth()">${reg?'Créer mon compte':'Se connecter'}</button><p class="mut" style="margin-top:12px" onclick="reg=!reg;render()"><u>${reg?'J\'ai déjà un compte':'Créer un compte'}</u></p>${reg?'':'<p class="mut" style="margin-top:8px" onclick="forgot()"><u>Mot de passe oublié</u></p>'}</div></div>`}
+async function auth(){toast('Un instant…');const r=await api(reg?'reg':'login',{name:$('#n').value,pass:$('#p').value,filiere:$('#f')?.value,secret:$('#s')?.value});if(r.e)return toast(r.e);localStorage.t=tok=r.t;me=null;view='home';render()}
+async function forgot(){const n=$('#n').value||prompt('Ton nom'),s=prompt('Ta réponse secrète'),p=prompt('Nouveau mot de passe');if(!n||!s||!p)return;const r=await fetch('/api/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,secret:s,pass:p})}).then(r=>r.json());toast(r.e||'Mot de passe changé')}
+function img(file){return new Promise(ok=>{const r=new FileReader();r.onload=()=>{if(!eco)return ok(r.result);const i=new Image();i.onload=()=>{const k=Math.min(1,800/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.6))};i.src=r.result};r.readAsDataURL(file)})}
+const pickMedia=()=>new Promise(ok=>{const i=document.createElement('input');i.type='file';i.accept='image/*,video/*,application/pdf';i.onchange=()=>i.files[0]&&ok(i.files[0]);i.click()});
+async function home(){
+  let ps=null,st=null;
+  try{const cached=JSON.parse(localStorage.feedCache||'null');if(cached&&cached.length){ps=cached}}catch(e){}
+  if(!ps){
+    $('#app').innerHTML=`<div class="w"><div class="topbar"><h2>Accueil</h2><button class="ghost" onclick="toggleTheme()">🌙</button></div>${skeleton()}</div>`+nav();
+  }
+  const res=await Promise.all([api('stories').catch(()=>[]),api('feed',{type:F.type,group:F.group,saved:F.saved}).catch(()=>[])]);
+  st=res[0]||[];ps=res[1]||[];
+  if(ps&&ps.length) try{localStorage.feedCache=JSON.stringify(ps)}catch(e){}
+  storiesCache=st;feedCache=ps;
+  const shown=ps.slice(0,feedLimit);
+  const T=[['','Tout'],['annonce','Annonces'],['cours','Cours'],['event','Événements'],['poll','Sondages'],['vente','Petites annonces']];
+  return `<div class="topbar"><h2>Accueil</h2><div class="row"><button class="ghost" onclick="refreshFeed()">↻ Actualiser</button><button class="ghost" onclick="toggleTheme()">🌙</button></div></div>
+  <div class="st"><div onclick="story()"><div class="av" style="border:3px dashed #8a4dff">+</div>Mon statut</div>${st.map((s,i)=>`<div onclick="openStory(${i})">${av(s.name,s.by)}${E((s.name||'?').split(' ')[0])}</div>`).join('')}</div>
+  <div class="chips">${T.map(([v,l])=>`<button class="${F.type===v&&!F.saved?'on':''}" onclick="F.type='${v}';F.saved=0;feedLimit=10;render()">${l}</button>`).join('')}<button class="${F.saved?'on':''}" onclick="F.saved=1;render()">Favoris</button></div>
+  <div class="chips"><button class="${F.group?'':'on'}" onclick="F.group='';render()">Toutes les filières</button><button class="${F.group?'on':''}" onclick="F.group='${E(me.filiere)}';render()">Ma filière : ${E(me.filiere)}</button></div>
+  ${shown.map(postH).join('')||'<p class="mut card">Aucune publication ici. Utilise le bouton + pour publier.</p>'}
+  ${ps.length>feedLimit?`<button class="btn" style="width:100%" onclick="feedLimit+=10;render()">Voir plus (${ps.length-feedLimit} restants)</button>`:''}`;
+}
+function refreshFeed(){feedLimit=10;localStorage.removeItem('feedCache');render();toast('Actualisé')}
+function postH(p){
+  const sv=(me.saved||[]).includes(p.id),lk=(p.likes||[]).includes(me.id),tot=(p.opts||[]).reduce((a,o)=>a+o.v.length,0);
+  const L={annonce:'Annonce',cours:'Cours',event:'Événement',poll:'Sondage',vente:'Petite annonce'}[p.type];
+  let media='';
+  if(p.img){
+    if(p.img.includes('data:video')||p.img.endsWith('.mp4')) media=`<video controls preload="none" src="${p.img}"></video>`;
+    else if(p.img.includes('application/pdf')||p.img.endsWith('.pdf')) media=`<div class="card" style="background:var(--bg)"><a href="${p.img}" target="_blank" style="color:var(--t);text-decoration:none">📄 Voir le PDF</a></div>`;
+    else media=`<img loading="lazy" decoding="async" src="${p.img}" ondblclick="dblLike('${p.id}')">`;
+  }
+  return `<div class="card post" id="post-${p.id}"><div class="row" onclick="go('me','${p.by}')">${av(p.name,p.by)}<div><b>${E(p.name)}</b>${vb(p.v)}<div class="mut">${ago(p.at)}${p.group?' · '+E(p.group):''}</div></div></div>
+  ${L?`<p style="margin-top:8px"><span class="tag">${L}</span>${p.date?` <span class="tag">${E(p.date)}</span>`:''}</p>`:''}
+  <p style="margin-top:8px;white-space:pre-wrap">${E(p.text)}</p>
+  <div style="position:relative" ondblclick="dblLike('${p.id}')">${media}<div class="heart-pop" id="hp-${p.id}">❤️</div></div>
+  ${(p.opts||[]).map((o,i)=>`<div class="bar" onclick="api('vote',{id:'${p.id}',i:${i}}).then(render)"><i style="width:${tot?o.v.length/tot*100:0}%"></i><span>${E(o.t)} · ${o.v.length}</span></div>`).join('')}
+  <div class="row"><button class="ic ${lk?'on':''}" onclick="api('like',{id:'${p.id}'}).then(render)">${I('heart',22,lk)}</button><span class="mut">${(p.likes||[]).length}</span><button class="ic" onclick="cm('${p.id}')">${I('msg',22)}</button><span class="mut">${(p.com||[]).length}</span><span class="sp"></span><button class="ic ${sv?'on':''}" onclick="api('save',{id:'${p.id}'}).then(()=>{me=null;render()})">${I('bm',22,sv)}</button><button class="ic" onclick="rep('${p.by}')">${I('flag',20)}</button></div>
+  ${(p.com||[]).slice(-3).map(c=>`<p class="mut"><b>${E(c.name)}</b> ${E(c.text)}</p>`).join('')}</div>`;
+}
+async function dblLike(id){
+  const el=document.getElementById('hp-'+id);if(el){el.classList.add('show');setTimeout(()=>el.classList.remove('show'),600)}
+  const p=feedCache.find(x=>x.id===id);if(p&&!(p.likes||[]).includes(me.id)){await api('like',{id});me=null;render()}
+}
+async function cm(i){const t=prompt('Ton commentaire');if(t){await api('comment',{id:i,text:t});render()}}
+async function rep(i){const t=prompt('Pourquoi signaler ?');if(t){await api('report',{target:i,why:t});toast('Signalement envoyé')}}
+async function story(){const t=prompt('Texte du statut')||'';const f=confirm('Ajouter une image ?')?await pickMedia():'';let url='';if(f instanceof File) url=await img(f);if(t||url){await api('story',{text:t,img:url});toast('Statut publié (24 h)');render()}}
+let storyIdx=0,storyTimer=null;
+function openStory(i){
+  storyIdx=i;showStory();
+}
+function showStory(){
+  const s=storiesCache[storyIdx];if(!s){$('#ov').style.display='none';return}
+  const o=$('#ov');o.style.display='grid';
+  o.innerHTML=`<div style="width:100%;max-width:480px;height:100dvh;display:flex;flex-direction:column;padding:14px">
+  <div class="progress"><i id="spbar"></i></div>
+  <div class="row" style="justify-content:space-between"><div class="row">${av(s.name,s.by)}<div><b>${E(s.name)}</b><div class="mut" style="color:#c7d2ee">${ago(s.at)}</div></div></div><button class="ic" style="color:#fff" onclick="closeStory()">${I('x',26)}</button></div>
+  ${s.img?`<img class="big" src="${s.img}" style="flex:1;object-fit:contain">`:''}
+  <h2 style="margin:14px 0;text-align:center">${E(s.text||'')}</h2>
+  <div class="row" style="justify-content:center">${['❤️','😂','😮','👏','🔥'].map(e=>`<button class="ic" style="font-size:28px" onclick="replyStory('${e}')"> ${e}</button>`).join('')}</div>
+  <div class="row"><button class="ghost" style="color:#fff;border-color:#fff" onclick="prevStory()">⬅ Préc.</button><span class="sp"></span><button class="ghost" style="color:#fff;border-color:#fff" onclick="nextStory()">Suiv. ➡</button></div>
+  </div>`;
+  clearInterval(storyTimer);let w=0;const bar=document.getElementById('spbar');
+  storyTimer=setInterval(()=>{w+=2;if(bar)bar.style.width=w+'%';if(w>=100){clearInterval(storyTimer);nextStory()}},100);
+}
+function closeStory(){clearInterval(storyTimer);$('#ov').style.display='none'}
+function nextStory(){if(storyIdx<storiesCache.length-1){storyIdx++;showStory()}else closeStory()}
+function prevStory(){if(storyIdx>0){storyIdx--;showStory()}}
+async function replyStory(e){const s=storiesCache[storyIdx];if(!s)return;await api('send',{to:s.by,text:e,ref:s.text||'Média'});closeStory();toast('Réponse envoyée')}
+function searchV(){return `<h2>Recherche</h2><input placeholder="Étudiant, filière ou mot…" oninput="srch(this.value)"><div id="r"></div>`}
+let sT;function srch(q){clearTimeout(sT);sT=setTimeout(async()=>{if(!q)return $('#r').innerHTML='';const u=await api('users',{q});$('#r').innerHTML=(u||[]).map(x=>`<div class="card row" onclick="go('me','${x.id}')">${av(x.name,x.id)}<div><b>${E(x.name)}${vb(x.v)}</b><div class="mut">${E(x.filiere)}</div></div></div>`).join('')||'<p class="mut">Aucun résultat</p>'},300)}
+let draft={};
+function newV(){return `<h2>Publier</h2><div class="card"><select id="ty"><option value="post">Publication</option><option value="annonce">Annonce</option><option value="cours">Cours / PDF</option><option value="event">Événement</option><option value="poll">Sondage</option><option value="vente">Petite annonce</option></select><textarea id="tx" rows="4" placeholder="Écris ici…"></textarea><input id="dt" placeholder="Date de l'événement"><textarea id="op" rows="3" placeholder="Sondage : une option par ligne"></textarea><label class="row"><input type="checkbox" id="gp" style="width:auto"> Réserver à ma filière (${E(me.filiere)})</label><div id="pv"></div><div class="row"><button class="ghost" onclick="pickMediaFile()">🖼️ Joindre fichier</button><span class="sp"></span><button class="btn" onclick="pub()">Publier</button></div></div>`}
+async function pickMediaFile(){const f=await pickMedia();if(!f)return;if(f.type.includes('pdf')){const r=new FileReader();r.onload=()=>{draft.img=r.result;$('#pv').innerHTML=`<p class="mut">PDF joint : ${f.name}</p>`};r.readAsDataURL(f)}else{draft.img=await img(f);$('#pv').innerHTML=`<img class="big" src="${draft.img}">`}}
+async function pub(){const r=await api('post',{type:$('#ty').value,text:$('#tx').value,date:$('#dt').value,img:draft.img,group:$('#gp').checked?me.filiere:'',opts:$('#op').value.split('\n').filter(x=>x.trim())});if(r.e)return toast(r.e);draft={};localStorage.removeItem('feedCache');toast('Publié');go('home')}
+async function chats(){const c=await api('chats');const u=await api('users',{q:''});return `<h2>Messages</h2>${(c||[]).map(x=>`<div class="card row" onclick="go('msg','${x.id}')">${av(x.name,x.id)}<div class="sp"><b>${E(x.name)}</b><div class="mut">${E(String(x.last).slice(0,40))}</div></div>${x.un?`<span class="dot" style="position:static">${x.un}</span>`:''}</div>`).join('')}<p class="mut" style="margin-top:16px">Écrire à un étudiant</p><div class="chips">${(u||[]).slice(0,15).map(x=>`<button onclick="go('msg','${x.id}')">${E(x.name)}</button>`).join('')}</div>`}
+async function convo(){const r=await api('convo',{with:cur});const u=await api('user',{id:cur});return `<div class="row"><button class="ic" onclick="go('msg')">${I('back',24)}</button>${av(u.name||'?',cur)}<div><b>${E(u.name)}${vb(u.v)}</b></div></div><div id="ml" style="padding:10px 0;min-height:60vh">${(r.m||[]).map(m=>`<div class="b ${m.from===me.id?'me':''}">${m.ref?`<div style="border-left:3px solid #fff8;padding-left:8px;font-size:13px;opacity:.85">Réf : ${E(m.ref)}</div>`:''}${m.audio?`<audio controls src="${m.audio}" style="max-width:100%"></audio>`:E(m.text)}${m.from===me.id?`<div class="mut" style="text-align:right;font-size:11px">${m.seen?'vu ✓✓':'envoyé ✓'}</div>`:''}</div>`).join('')}</div><div class="row" style="position:sticky;bottom:58px;background:var(--bg);padding:6px 0"><input id="mt" placeholder="Message…" onkeydown="event.key==='Enter'&&snd()"><button class="ic" id="mic" onclick="mic()">${I('mic',24)}</button><button class="ic" style="color:#a78bff" onclick="snd()">${I('send',24)}</button></div>`}
+async function snd(a){const t=$('#mt')?.value;if(!t&&!a)return;await api('send',{to:cur,text:a?'':t,audio:a||''});render()}
+async function mic(){if(rec&&rec.state==='recording'){rec.stop();return}try{const s=await navigator.mediaDevices.getUserMedia({audio:true});chunks=[];rec=new MediaRecorder(s);rec.ondataavailable=e=>chunks.push(e.data);rec.onstop=()=>{s.getTracks().forEach(t=>t.stop());$('#mic').innerHTML=I('mic',24);const f=new FileReader();f.onload=()=>snd(f.result);f.readAsDataURL(new Blob(chunks,{type:rec.mimeType}))};rec.start();$('#mic').innerHTML=I('stop',24);toast('Enregistrement…')}catch(e){toast('Micro refusé')}}
+async function prof(i){
+  const u=i===me.id?me:await api('user',{id:i});const ps=await api('feed',{by:i});
+  const mine=i===me.id,fl=(me.following||[]).includes(i);
+  return `<div class="card" style="text-align:center"><div onclick="${mine?'setPhoto()':''}" style="width:84px;margin:auto">${av(u.name,i,'width:84px;height:84px;font-size:34px')}</div><h2 style="margin-top:8px">${E(u.name)}${vb(u.v)}</h2><p class="mut">${E(u.filiere)} · ${u.fol||0} abonné(s)</p><p>${E(u.bio||'')}</p>
+  <div class="row" style="justify-content:center;margin-top:10px;flex-wrap:wrap">${mine?`<button class="ghost" onclick="setPhoto()">Photo de profil</button><button class="ghost" onclick="edit()">Modifier</button><button class="ghost" onclick="toggleTheme()">🌙 Mode sombre</button><button class="ghost" onclick="api('logout').then(()=>{localStorage.t='';tok='';me=null;render()})">Déconnexion</button>`:`<button class="btn" onclick="api('follow',{id:'${i}'}).then(()=>{me=null;render()})">${fl?'Abonné ✓':"S'abonner"}</button><button class="ghost" onclick="go('msg','${i}')">Message</button>`}</div></div>
+  <h2 style="margin-top:6px">Publications (${(ps||[]).length})</h2>
+  <div class="grid">${(ps||[]).map(p=>p.img?`<div onclick="go('home')"><img loading="lazy" src="${p.img}"></div>`:`<div onclick="go('home')" style="display:grid;place-items:center;padding:8px;font-size:13px">${E((p.text||'').slice(0,60))}</div>`).join('')||'<p class="mut">Aucune publication</p>'}</div>
+  ${(ps||[]).map(postH).join('')}`;
+}
+async function setPhoto(){const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=()=>{const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=async()=>{const s=Math.min(im.width,im.height),c=document.createElement('canvas');c.width=c.height=256;c.getContext('2d').drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,256,256);const x=await api('photo',{img:c.toDataURL('image/jpeg',.8)});if(x.e)return toast(x.e);localStorage.pv=Date.now();toast('Photo mise à jour');render()};im.src=r.result};r.readAsDataURL(f)};i.click()}
+async function edit(){const b=prompt('Ta bio',me.bio||''),f=prompt('Ta filière',me.filiere||'');if(b===null)return;await api('bio',{bio:b,filiere:f});me=null;render()}
+async function tick(){if(!tok||document.hidden)return;const p=await api('poll');if(!p||p.un===undefined)return;un=p.un;if(pun>=0&&p.un>pun&&p.last){toast('Message de '+p.last.name)}pun=p.un;const nv=document.querySelector('nav');if(nv)nv.outerHTML=nav();if(view==='home'||view==='msg'){const a=document.activeElement&&document.activeElement.id;if(['mt','tx','q','op','dt'].includes(a))return;}}
+setInterval(()=>{if(tok) fetch('/api/poll',{method:'POST',headers:{'Content-Type':'application/json','x-token':tok},body:'{}'}).catch(()=>{})},600000);
+let startY=0;document.addEventListener('touchstart',e=>{startY=e.touches[0].clientY},{passive:true});
+document.addEventListener('touchend',e=>{const dy=e.changedTouches[0].clientY-startY;if(dy>120&&window.scrollY===0&&tok&&view==='home'){refreshFeed()}},{passive:true});
+render();
+</script>
+</body>
+</html>
