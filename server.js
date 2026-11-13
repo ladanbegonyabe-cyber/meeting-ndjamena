@@ -1,156 +1,44 @@
-const express = require('express'), multer = require('multer'), bcrypt = require('bcryptjs'),
-  jwt = require('jsonwebtoken'), pg = require('pg'), cloudinary = require('cloudinary').v2;
-
-pg.types.setTypeParser(20, Number);
-
-const SECRET = process.env.JWT_SECRET || 'changez-moi-en-production';
-const PORT = process.env.PORT || 3000;
-const db = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false }, max: 10 });
-const Q = (s, p) => db.query(s, p).then(r => r.rows);
-
-const up = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 30 * 1024 * 1024 },
-  fileFilter: (r, f, cb) => cb(null, /^(image|video)\//.test(f.mimetype))
-});
-const store = f => new Promise((ok, ko) => {
-  if (!f) return ok(null);
-  cloudinary.uploader.upload_stream({ resource_type: 'auto', folder: 'meeting' },
-    (e, r) => e ? ko(e) : ok(r.secure_url)).end(f.buffer);
-});
-
-const app = express();
-app.use(express.json());
-app.use(express.static('public'));
-
-const h = fn => (req, res, next) => fn(req, res).catch(next);
-const auth = (req, res, next) => {
-  try { req.uid = jwt.verify((req.headers.authorization || '').slice(7), SECRET).id; next(); }
-  catch { res.status(401).json({ error: 'Non connecté' }); }
-};
-const token = u => jwt.sign({ id: u.id }, SECRET, { expiresIn: '30d' });
-const pub = u => ({ id: u.id, name: u.name, faculty: u.faculty, level: u.level, bio: u.bio, avatar: u.avatar });
-const priv = u => ({ ...pub(u), email: u.email, phone: u.phone });
-const user = async id => (await Q('SELECT * FROM users WHERE id=$1', [id]))[0];
-const num = v => { const n = parseInt(v, 10); if (isNaN(n)) throw new Error('Identifiant invalide'); return n; };
-
-app.post('/api/register', up.single('avatar'), h(async (req, res) => {
-  const { name, email, password, faculty, level, phone, bio } = req.body;
-  if (!name || !email || !password || password.length < 6)
-    return res.status(400).json({ error: 'Nom, email et mot de passe (6 caractères min.) requis' });
-  if ((await Q('SELECT 1 FROM users WHERE email=$1', [email.toLowerCase()])).length)
-    return res.status(400).json({ error: 'Cet email est déjà utilisé' });
-  const avatar = await store(req.file);
-  const [u] = await Q(`INSERT INTO users(name,email,pass,faculty,level,phone,bio,avatar)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
-    [name, email.toLowerCase(), bcrypt.hashSync(password, 10), faculty || '', level || '', phone || '', bio || '', avatar]);
-  res.json({ token: token(u), me: priv(u) });
-}));
-
-app.post('/api/login', h(async (req, res) => {
-  const [u] = await Q('SELECT * FROM users WHERE email=$1', [(req.body.email || '').toLowerCase()]);
-  if (!u || !bcrypt.compareSync(req.body.password || '', u.pass))
-    return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
-  res.json({ token: token(u), me: priv(u) });
-}));
-
-app.get('/api/me', auth, h(async (req, res) => res.json(priv(await user(req.uid)))));
-app.put('/api/me', auth, up.single('avatar'), h(async (req, res) => {
-  const o = await user(req.uid), b = req.body, av = await store(req.file);
-  const [u] = await Q('UPDATE users SET name=$1,faculty=$2,level=$3,phone=$4,bio=$5,avatar=$6 WHERE id=$7 RETURNING *',
-    [b.name || o.name, b.faculty ?? o.faculty, b.level ?? o.level, b.phone ?? o.phone, b.bio ?? o.bio, av || o.avatar, req.uid]);
-  res.json(priv(u));
-}));
-app.post('/api/password', auth, h(async (req, res) => {
-  const { old, new: nw } = req.body, u = await user(req.uid);
-  if (!bcrypt.compareSync(old || '', u.pass)) return res.status(400).json({ error: 'Ancien mot de passe incorrect' });
-  if (!nw || nw.length < 6) return res.status(400).json({ error: 'Nouveau mot de passe : 6 caractères min.' });
-  await Q('UPDATE users SET pass=$1 WHERE id=$2', [bcrypt.hashSync(nw, 10), req.uid]);
-  res.json({ ok: true });
-}));
-
-app.get('/api/users', auth, h(async (req, res) => {
-  const s = '%' + (req.query.q || '') + '%';
-  res.json((await Q(`SELECT u.*, (SELECT count(*) FROM msgs m WHERE m.frm=u.id AND m.too=$1 AND NOT m.seen) AS unread
-    FROM users u WHERE u.id!=$1 AND (u.name ILIKE $2 OR u.faculty ILIKE $2)
-    ORDER BY unread DESC, u.name LIMIT 50`, [req.uid, s])).map(u => ({ ...pub(u), unread: u.unread })));
-}));
-app.get('/api/users/:id', auth, h(async (req, res) => {
-  const u = await user(num(req.params.id));
-  u ? res.json(pub(u)) : res.status(404).json({ error: 'Étudiant introuvable' });
-}));
-
-app.get('/api/posts', auth, h(async (req, res) => {
-  res.json(await Q(`SELECT p.*, u.name, u.faculty, u.avatar,
-    (SELECT count(*) FROM likes WHERE pid=p.id) AS likes,
-    EXISTS(SELECT 1 FROM likes WHERE pid=p.id AND uid=$1) AS liked,
-    (SELECT count(*) FROM comments WHERE pid=p.id) AS ncom
-    FROM posts p JOIN users u ON u.id=p.uid WHERE p.ts<$2 ORDER BY p.ts DESC LIMIT 20`,
-    [req.uid, Number(req.query.before) || 9e15]));
-}));
-app.post('/api/posts', auth, up.single('media'), h(async (req, res) => {
-  const text = (req.body.text || '').trim();
-  if (!text && !req.file) return res.status(400).json({ error: 'Publication vide' });
-  const type = req.file ? (req.file.mimetype.startsWith('video') ? 'video' : 'image') : null;
-  await Q('INSERT INTO posts(uid,text,media,type,ts) VALUES($1,$2,$3,$4,$5)', [req.uid, text, await store(req.file), type, Date.now()]);
-  res.json({ ok: true });
-}));
-app.delete('/api/posts/:id', auth, h(async (req, res) => {
-  const id = num(req.params.id);
-  if ((await Q('DELETE FROM posts WHERE id=$1 AND uid=$2 RETURNING id', [id, req.uid])).length) {
-    await Q('DELETE FROM likes WHERE pid=$1', [id]);
-    await Q('DELETE FROM comments WHERE pid=$1', [id]);
-  }
-  res.json({ ok: true });
-}));
-app.post('/api/posts/:id/like', auth, h(async (req, res) => {
-  const id = num(req.params.id);
-  const del = await Q('DELETE FROM likes WHERE pid=$1 AND uid=$2 RETURNING pid', [id, req.uid]);
-  if (!del.length) await Q('INSERT INTO likes(pid,uid) VALUES($1,$2) ON CONFLICT DO NOTHING', [id, req.uid]);
-  const [c] = await Q('SELECT count(*) AS n FROM likes WHERE pid=$1', [id]);
-  res.json({ liked: !del.length, n: c.n });
-}));
-app.get('/api/posts/:id/comments', auth, h(async (req, res) => {
-  res.json(await Q(`SELECT c.*, u.name FROM comments c JOIN users u ON u.id=c.uid WHERE c.pid=$1 ORDER BY c.ts LIMIT 200`, [num(req.params.id)]));
-}));
-app.post('/api/posts/:id/comments', auth, h(async (req, res) => {
-  const t = (req.body.text || '').trim();
-  if (!t) return res.status(400).json({ error: 'Commentaire vide' });
-  await Q('INSERT INTO comments(pid,uid,text,ts) VALUES($1,$2,$3,$4)', [num(req.params.id), req.uid, t, Date.now()]);
-  res.json({ ok: true });
-}));
-
-app.get('/api/unread', auth, h(async (req, res) => {
-  const [c] = await Q('SELECT count(*) AS n FROM msgs WHERE too=$1 AND NOT seen', [req.uid]);
-  const [last] = await Q(`SELECT u.name, m.text FROM msgs m JOIN users u ON u.id=m.frm
-    WHERE m.too=$1 AND NOT m.seen ORDER BY m.ts DESC LIMIT 1`, [req.uid]);
-  res.json({ n: c.n, last: last || null });
-}));
-app.get('/api/msgs/:id', auth, h(async (req, res) => {
-  const id = num(req.params.id);
-  await Q('UPDATE msgs SET seen=true WHERE frm=$1 AND too=$2 AND NOT seen', [id, req.uid]);
-  res.json(await Q(`SELECT * FROM (SELECT * FROM msgs WHERE (frm=$1 AND too=$2) OR (frm=$2 AND too=$1)
-    ORDER BY ts DESC LIMIT 200) x ORDER BY ts`, [req.uid, id]));
-}));
-app.post('/api/msgs/:id', auth, h(async (req, res) => {
-  const t = (req.body.text || '').trim();
-  if (!t) return res.status(400).json({ error: 'Message vide' });
-  await Q('INSERT INTO msgs(frm,too,text,ts) VALUES($1,$2,$3,$4)', [req.uid, num(req.params.id), t, Date.now()]);
-  res.json({ ok: true });
-}));
-
-app.use((err, req, res, next) => { console.error(err); res.status(400).json({ error: err.message }); });
-
-(async () => {
-  await db.query(`
-  CREATE TABLE IF NOT EXISTS users(id SERIAL PRIMARY KEY, name TEXT, email TEXT UNIQUE, pass TEXT,
-    faculty TEXT DEFAULT '', level TEXT DEFAULT '', phone TEXT DEFAULT '', bio TEXT DEFAULT '', avatar TEXT);
-  CREATE TABLE IF NOT EXISTS posts(id SERIAL PRIMARY KEY, uid INT, text TEXT, media TEXT, type TEXT, ts BIGINT);
-  CREATE TABLE IF NOT EXISTS likes(pid INT, uid INT, PRIMARY KEY(pid, uid));
-  CREATE TABLE IF NOT EXISTS comments(id SERIAL PRIMARY KEY, pid INT, uid INT, text TEXT, ts BIGINT);
-  CREATE TABLE IF NOT EXISTS msgs(id SERIAL PRIMARY KEY, frm INT, too INT, text TEXT, ts BIGINT, seen BOOLEAN DEFAULT false);
-  CREATE INDEX IF NOT EXISTS i_posts ON posts(ts);
-  CREATE INDEX IF NOT EXISTS i_msgs ON msgs(frm, too);
-  CREATE INDEX IF NOT EXISTS i_com ON comments(pid);`);
-  app.listen(PORT, () => console.log(`Meeting University of N'djamena → port ${PORT}`));
-})().catch(e => { console.error('Base de données inaccessible :', e.message); process.exit(1); });
+const http=require('http'),fs=require('fs'),path=require('path'),crypto=require('crypto');
+const DIR=process.env.DATA_DIR||__dirname,F=path.join(DIR,'data.json');
+let D={users:[],posts:[],stories:[],msgs:[],tok:{},typing:{}};
+try{D=Object.assign(D,JSON.parse(fs.readFileSync(F)))}catch(e){}
+let T;const save=()=>{clearTimeout(T);T=setTimeout(()=>fs.writeFile(F,JSON.stringify(D),()=>{}),400)};
+const id=()=>crypto.randomBytes(6).toString('hex');
+const H=p=>crypto.createHash('sha256').update('mun'+p).digest('hex');
+const ADM=(process.env.ADMINS||'').split(',').map(s=>s.trim().toLowerCase());
+const pub=u=>({id:u.id,name:u.name,filiere:u.filiere,bio:u.bio||'',v:ADM.includes(u.name.toLowerCase()),fol:D.users.filter(x=>(x.following||[]).includes(u.id)).length});
+const nm=i=>(D.users.find(u=>u.id===i)||{}).name||'?';
+const A={
+reg:(b)=>{const n=(b.name||'').trim();if(n.length<3||(b.pass||'').length<4||!b.secret)return{e:'Nom (3+), mot de passe (4+) et réponse secrète requis'};
+if(D.users.some(u=>u.name.toLowerCase()===n.toLowerCase()))return{e:'Ce nom existe déjà'};
+const u={id:id(),name:n,filiere:(b.filiere||'Général').trim(),pass:H(b.pass),secret:H((b.secret||'').toLowerCase().trim()),following:[],saved:[],blocked:[]};D.users.push(u);const t=id();D.tok[t]=u.id;save();return{t}},
+login:(b)=>{const u=D.users.find(u=>u.name.toLowerCase()===(b.name||'').trim().toLowerCase()&&u.pass===H(b.pass));if(!u)return{e:'Nom ou mot de passe incorrect'};const t=id();D.tok[t]=u.id;save();return{t}},
+reset:(b)=>{const u=D.users.find(u=>u.name.toLowerCase()===(b.name||'').trim().toLowerCase());if(!u||u.secret!==H((b.secret||'').toLowerCase().trim())||(b.pass||'').length<4)return{e:'Informations incorrectes'};u.pass=H(b.pass);save();return{ok:1}}};
+const P={
+me:u=>({...pub(u),following:u.following,saved:u.saved,blocked:u.blocked}),
+pass:(u,b)=>{if(u.pass!==H(b.old)||(b.pass||'').length<4)return{e:'Ancien mot de passe incorrect ou nouveau trop court'};u.pass=H(b.pass);save();return{ok:1}},
+bio:(u,b)=>{u.bio=(b.bio||'').slice(0,200);u.filiere=(b.filiere||u.filiere).slice(0,40);save();return{ok:1}},
+users:(u,b)=>{const q=(b.q||'').toLowerCase();return D.users.filter(x=>x.id!==u.id&&!u.blocked.includes(x.id)&&(x.name+' '+x.filiere).toLowerCase().includes(q)).slice(0,30).map(pub)},
+user:(u,b)=>{const x=D.users.find(x=>x.id===b.id);return x?{...pub(x),posts:D.posts.filter(p=>p.by===x.id).length}:{e:'Introuvable'}},
+follow:(u,b)=>{const i=u.following.indexOf(b.id);i<0?u.following.push(b.id):u.following.splice(i,1);save();return{ok:1}},
+block:(u,b)=>{if(!u.blocked.includes(b.id))u.blocked.push(b.id);save();return{ok:1}},
+report:(u,b)=>{(D.reports=D.reports||[]).push({by:u.id,...b,at:Date.now()});save();return{ok:1}},
+post:(u,b)=>{if(!(b.text||'').trim()&&!b.img)return{e:'Vide'};const p={id:id(),by:u.id,type:b.type||'post',text:(b.text||'').slice(0,2000),img:b.img||'',at:Date.now(),likes:[],com:[],group:b.group||'',date:b.date||'',opts:(b.opts||[]).slice(0,6).map(t=>({t:String(t).slice(0,60),v:[]}))};D.posts.push(p);save();return{ok:1}},
+feed:(u,b)=>{const q=(b.q||'').toLowerCase();return D.posts.filter(p=>!u.blocked.includes(p.by)&&(!b.type||p.type===b.type)&&(!b.group||p.group===b.group)&&(!b.saved||u.saved.includes(p.id))&&(!b.by||p.by===b.by)&&(!q||(p.text+nm(p.by)).toLowerCase().includes(q))).sort((a,c)=>c.at-a.at).slice(0,60).map(p=>({...p,name:nm(p.by),com:p.com.map(c=>({...c,name:nm(c.by)}))}))},
+like:(u,b)=>{const p=D.posts.find(p=>p.id===b.id);if(p){const i=p.likes.indexOf(u.id);i<0?p.likes.push(u.id):p.likes.splice(i,1);save()}return{ok:1}},
+comment:(u,b)=>{const p=D.posts.find(p=>p.id===b.id);if(p&&(b.text||'').trim()){p.com.push({by:u.id,text:b.text.slice(0,500),at:Date.now()});save()}return{ok:1}},
+save:(u,b)=>{const i=u.saved.indexOf(b.id);i<0?u.saved.push(b.id):u.saved.splice(i,1);save();return{ok:1}},
+vote:(u,b)=>{const p=D.posts.find(p=>p.id===b.id);if(p&&p.opts[b.i]&&!p.opts.some(o=>o.v.includes(u.id))){p.opts[b.i].v.push(u.id);save()}return{ok:1}},
+story:(u,b)=>{if(!(b.text||'').trim()&&!b.img)return{e:'Vide'};D.stories.push({id:id(),by:u.id,text:(b.text||'').slice(0,200),img:b.img||'',at:Date.now()});save();return{ok:1}},
+stories:(u)=>{const c=Date.now()-864e5;D.stories=D.stories.filter(s=>s.at>c);return D.stories.filter(s=>!u.blocked.includes(s.by)).sort((a,b)=>b.at-a.at).map(s=>({...s,name:nm(s.by)}))},
+send:(u,b)=>{if(!(b.text||'').trim()&&!b.audio)return{e:'Vide'};D.msgs.push({id:id(),from:u.id,to:b.to,text:(b.text||'').slice(0,2000),audio:b.audio||'',at:Date.now(),seen:0});save();return{ok:1}},
+convo:(u,b)=>{D.msgs.forEach(m=>{if(m.from===b.with&&m.to===u.id&&!m.seen)m.seen=1});save();const ty=D.typing[b.with+'>'+u.id]>Date.now()-4e3;return{ty,m:D.msgs.filter(m=>(m.from===u.id&&m.to===b.with)||(m.from===b.with&&m.to===u.id)).slice(-150)}},
+chats:(u)=>{const o={};D.msgs.filter(m=>m.from===u.id||m.to===u.id).forEach(m=>{const w=m.from===u.id?m.to:m.from;if(u.blocked.includes(w))return;const c=o[w]||(o[w]={id:w,name:nm(w),last:'',at:0,un:0});if(m.at>=c.at){c.at=m.at;c.last=m.audio?'🎤 Message vocal':m.text}if(m.to===u.id&&!m.seen)c.un++});return Object.values(o).sort((a,b)=>b.at-a.at)},
+typing:(u,b)=>{D.typing[u.id+'>'+b.to]=Date.now();return{ok:1}},
+poll:(u)=>({un:D.msgs.filter(m=>m.to===u.id&&!m.seen&&!u.blocked.includes(m.from)).length,st:D.stories.filter(s=>s.at>Date.now()-864e5).length,last:D.msgs.filter(m=>m.to===u.id&&!m.seen).slice(-1).map(m=>({name:nm(m.from),text:m.audio?'🎤 Message vocal':m.text}))[0]||null})};
+http.createServer((q,r)=>{
+if(q.method==='POST'&&q.url.startsWith('/api/')){let s='';q.on('data',d=>{s+=d;if(s.length>6e6)q.destroy()});q.on('end',()=>{let o;try{const b=JSON.parse(s||'{}'),n=q.url.slice(5);
+if(A[n])o=A[n](b);else{const u=D.users.find(x=>x.id===D.tok[q.headers['x-token']]);if(!u){r.writeHead(401);return r.end('{}')}o=P[n]?P[n](u,b):{e:'?'}}}catch(e){o={e:'Erreur'}}
+r.writeHead(200,{'Content-Type':'application/json'});r.end(JSON.stringify(o))});return}
+fs.readFile(path.join(__dirname,'public','index.html'),(e,d)=>{r.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});r.end(d)})
+}).listen(process.env.PORT||3000);
