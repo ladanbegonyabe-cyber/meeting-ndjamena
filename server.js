@@ -15,6 +15,7 @@ const u={id:id(),name:n,filiere:(b.filiere||'Général').trim(),pass:H(b.pass),s
 login:(b)=>{const u=D.users.find(u=>u.name.toLowerCase()===(b.name||'').trim().toLowerCase()&&u.pass===H(b.pass));if(!u)return{e:'Nom ou mot de passe incorrect'};const t=id();D.tok[t]=u.id;save();return{t}},
 reset:(b)=>{const u=D.users.find(u=>u.name.toLowerCase()===(b.name||'').trim().toLowerCase());if(!u||u.secret!==H((b.secret||'').toLowerCase().trim())||(b.pass||'').length<4)return{e:'Informations incorrectes'};u.pass=H(b.pass);save();return{ok:1}}};
 const P={
+photo:(u,b)=>{if(!/^data:image\/(jpeg|png|webp);base64,/.test(b.img||'')||b.img.length>300000)return{e:'Image invalide ou trop lourde'};u.photo=b.img;save();return{ok:1}},
 me:u=>({...pub(u),following:u.following,saved:u.saved,blocked:u.blocked}),
 pass:(u,b)=>{if(u.pass!==H(b.old)||(b.pass||'').length<4)return{e:'Ancien mot de passe incorrect ou nouveau trop court'};u.pass=H(b.pass);save();return{ok:1}},
 bio:(u,b)=>{u.bio=(b.bio||'').slice(0,200);u.filiere=(b.filiere||u.filiere).slice(0,40);save();return{ok:1}},
@@ -41,5 +42,6 @@ http.createServer((q,r)=>{
 if(q.method==='POST'&&q.url.startsWith('/api/')){let s='';q.on('data',d=>{s+=d;if(s.length>6e6)q.destroy()});q.on('end',()=>{let o;try{const b=JSON.parse(s||'{}'),n=q.url.slice(5);
 if(A[n])o=A[n](b);else{const u=D.users.find(x=>x.id===D.tok[q.headers['x-token']]);if(!u){r.writeHead(401);return r.end('{}')}o=P[n]?P[n](u,b):{e:'?'}}}catch(e){o={e:'Erreur'}}
 Z(q,r,'application/json',JSON.stringify(o))});return}
+if(q.method==='GET'&&q.url.startsWith('/photo/')){const x=D.users.find(x=>x.id===q.url.slice(7).split('?')[0]),m=x&&x.photo&&x.photo.match(/^data:(image\/\w+);base64,(.*)$/);if(!m){r.writeHead(404);return r.end()}r.writeHead(200,{'Content-Type':m[1],'Cache-Control':'public,max-age=60'});return r.end(Buffer.from(m[2],'base64'))}
 fs.readFile(path.join(__dirname,'public','index.html'),(e,d)=>Z(q,r,'text/html; charset=utf-8',d||'Erreur'))
 }).listen(process.env.PORT||3000);
