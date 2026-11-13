@@ -1,6 +1,6 @@
-<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0d1030"><title>Meeting University of N'djamena</title>
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#d6ecff"><title>Meeting University of N'djamena</title>
 <style>
-:root{--bg:#0d1030;--card:#171b45;--line:#272c63;--t:#eef0ff;--mut:#9aa0d6;--g:linear-gradient(135deg,#2f6bff,#8a4dff)}
+:root{--bg:#d6ecff;--card:#ffffff;--line:#b9d9f5;--t:#10224a;--mut:#5b6f99;--g:linear-gradient(135deg,#2f6bff,#8a4dff)}
 *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
 body{background:var(--bg);color:var(--t);font:16px/1.4 system-ui,sans-serif;padding-bottom:72px}
 button,input,textarea,select{font:inherit;color:inherit}
@@ -12,7 +12,7 @@ input,textarea,select{width:100%;background:var(--card);border:1px solid var(--l
 .mut{color:var(--mut);font-size:14px}.row{display:flex;gap:10px;align-items:center}.sp{flex:1}
 h1,h2{font-weight:800}
 .av{width:44px;height:44px;border-radius:50%;background:var(--g);display:grid;place-items:center;font-weight:800;flex:none}
-nav{position:fixed;bottom:0;left:0;right:0;background:#10143a;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+nav{position:fixed;bottom:0;left:0;right:0;background:#ffffff;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
 nav button{flex:1;background:none;border:0;padding:12px 0;position:relative;color:var(--mut);display:flex;justify-content:center}
 nav button.on{color:#a78bff}
 .dot{position:absolute;top:6px;right:22%;background:#ff4d6d;font-size:12px;border-radius:10px;padding:0 6px;color:#fff}
@@ -25,7 +25,21 @@ nav button.on{color:#a78bff}
 .bar{background:var(--line);border-radius:10px;overflow:hidden;margin:5px 0;cursor:pointer;position:relative;padding:8px}.bar i{position:absolute;inset:0 auto 0 0;background:#3b4bd8;opacity:.6}.bar span{position:relative}
 #ov{position:fixed;inset:0;background:#000d;display:none;place-items:center;z-index:9;padding:20px;text-align:center}
 #toast{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:var(--g);padding:10px 18px;border-radius:20px;display:none;z-index:10}
-</style></head><body><div id="toast"></div><div id="ov" onclick="this.style.display='none'"></div><div id="app"></div>
+.em{display:inline-block;line-height:1;transition:transform .2s,opacity .2s}
+nav button .em{opacity:.5}nav button.on .em{opacity:1;transform:scale(1.25)}
+#sp{position:fixed;inset:0;background:var(--bg);z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .5s}
+#sp.out{opacity:0;pointer-events:none}
+#sp .lg{width:96px;height:96px;border-radius:28px;background:var(--g);display:grid;place-items:center;font-size:48px;animation:pop .8s cubic-bezier(.2,1.4,.4,1) both,glow 1.4s .6s ease-out}
+#sp b{text-align:center;font-size:20px;animation:up .6s .4s both}
+@keyframes pop{0%{transform:scale(.3) rotate(-14deg);opacity:0}100%{transform:none;opacity:1}}
+@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes glow{0%{box-shadow:0 0 0 0 #8a4dff99}100%{box-shadow:0 0 0 40px #8a4dff00}}
+@media(prefers-reduced-motion:reduce){#sp .lg,#sp b{animation:none}}
+.btn,.chips .on,.me,.av,#toast{color:#fff}
+.card{box-shadow:0 2px 12px #4f8fd622}
+nav{box-shadow:0 -2px 12px #4f8fd622}
+#ov{color:#fff}#ov .mut{color:#c7d2ee}
+</style></head><body><div id="sp"><div class="lg">🎓</div><b>Meeting University<br>of N'djamena</b></div><div id="toast"></div><div id="ov" onclick="this.style.display='none'"></div><div id="app"></div>
 <script>
 window.onerror=m=>{try{document.getElementById('toast').textContent='Erreur : '+m;document.getElementById('toast').style.display='block'}catch(e){}};
 var reg=false;
@@ -37,7 +51,8 @@ const ago=t=>{const m=(Date.now()-t)/6e4|0;return m<1?"à l'instant":m<60?m+' mi
 const av=n=>`<div class="av">${E(n[0]||'?').toUpperCase()}</div>`;
 const vb=v=>v?' <span class="vk">✓</span>':'';
 const IC={home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>',search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',new:'<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>',msg:'<path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12z"/>',me:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>',heart:'<path d="M12 20.5S3 15 3 9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6-9 11.5-9 11.5z"/>',bm:'<path d="M6 3h12v18l-6-4-6 4z"/>',flag:'<path d="M5 21V4h12l-2 4 2 4H5"/>',mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',send:'<path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4z"/>',back:'<path d="M15 5l-7 7 7 7"/>',stop:'<rect x="6" y="6" width="12" height="12" rx="2"/>',image:'<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/>',x:'<path d="M6 6l12 12M18 6 6 18"/>'};
-const I=(n,s=22,f=0)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${f?'currentColor':'none'}" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${IC[n]}</svg>`;
+const IE={home:'🏡',search:'🔎',new:'✨',msg:'🗨️',me:'😎',heart:'🤍',bm:'📌',flag:'🚩',mic:'🎙️',send:'🚀',back:'⬅️',stop:'⏹️',image:'🖼️',x:'✖️'};
+const I=(n,s=22,f=0)=>`<span class="em" style="font-size:${Math.round(s*.9)}px">${f?(n==='heart'?'❤️':n==='bm'?'🔖':IE[n]):IE[n]}</span>`;
 let ST=[],CS=null,sig='';
 function img(file){return new Promise(ok=>{const r=new FileReader();r.onload=()=>{if(!eco)return ok(r.result);const i=new Image();i.onload=()=>{const k=Math.min(1,800/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.6))};i.src=r.result};r.readAsDataURL(file)})}
 const pick=()=>new Promise(ok=>{const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=()=>i.files[0]&&img(i.files[0]).then(ok);i.click()});
@@ -107,4 +122,5 @@ const ch=p.sig!==sig;sig=p.sig;if(!ch||document.querySelector('#ov[style*=grid]'
 const a=document.activeElement&&document.activeElement.id;if(['mt','tx','q','op','dt','sr'].includes(a))return;
 if(view==='home'||view==='msg')render()}
 render();
+setTimeout(()=>{const s=$('#sp');s.classList.add('out');setTimeout(()=>s.remove(),500)},1300);
 </script></body></html>
