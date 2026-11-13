@@ -18,10 +18,10 @@ body{margin:0;font-family:Poppins,system-ui,sans-serif;background:var(--bg);colo
 .wrap{max-width:640px;margin:0 auto;padding:12px}
 header{position:sticky;top:0;z-index:20;background:var(--g);color:#fff;padding:10px 14px;display:flex;align-items:center;gap:10px;font-weight:700;font-size:.95em;box-shadow:0 2px 14px rgba(79,70,229,.35)}
 header span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#th{padding:6px 10px;background:rgba(255,255,255,.2);border-radius:99px}
+#th{padding:8px 12px;font-size:1.3em;background:rgba(255,255,255,.2);border-radius:99px}
 nav{position:fixed;bottom:0;left:0;right:0;z-index:20;display:flex;background:var(--card);border-top:1px solid var(--bd);padding:6px 8px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -4px 18px rgba(0,0,0,.08)}
-nav button{flex:1;background:none;color:var(--mu);display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px;font-size:.72em;font-weight:500;position:relative}
-nav button .ic{font-size:1.5em;line-height:1;filter:grayscale(1);opacity:.7;transition:.2s}
+nav button{flex:1;background:none;color:var(--mu);display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 6px;font-size:.8em;font-weight:500;position:relative}
+nav button .ic{font-size:2.2em;line-height:1;filter:grayscale(1);opacity:.7;transition:.2s}
 nav button.on{color:var(--pr)}
 nav button.on .ic{filter:none;opacity:1;transform:translateY(-2px) scale(1.12)}
 nav .bd{position:absolute;top:0;left:55%}
@@ -32,7 +32,7 @@ button{padding:10px 16px;border:0;border-radius:12px;background:var(--g);color:#
 button:active{transform:scale(.95)}button:disabled{opacity:.6}
 button.alt{background:var(--card);color:var(--tx);border:1px solid var(--bd);font-weight:500}
 .row{display:flex;gap:10px;align-items:center}.mu{color:var(--mu);font-size:.85em}
-.av{width:42px;height:42px;border-radius:50%;object-fit:cover;background:var(--g);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none}
+.av{width:50px;height:50px;border-radius:50%;object-fit:cover;background:var(--g);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none}
 .av.big{width:92px;height:92px;font-size:2em;border:4px solid var(--card)}
 .chip{background:var(--bg);color:var(--pr);border-radius:99px;padding:1px 8px;font-size:.72em;font-weight:600;margin-left:6px}
 .mw{position:relative;margin:10px -14px 0}
@@ -52,22 +52,24 @@ button.alt{background:var(--card);color:var(--tx);border:1px solid var(--bd);fon
 .cover{height:110px;margin:-14px -14px 0;border-radius:20px 20px 0 0}
 .prof{margin-top:-46px;justify-content:center}
 .stories{display:flex;gap:12px;overflow-x:auto;padding:4px 2px 12px}
-.st{flex:none;text-align:center;width:66px;font-size:.7em;cursor:pointer}
+.st{flex:none;text-align:center;width:84px;font-size:.78em;cursor:pointer}
 .ring{padding:3px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#ec4899,#7c3aed);display:inline-block}
 .ring.add{background:var(--bd)}
-.ring .av{width:56px;height:56px;border:3px solid var(--bg)}
+.ring .av{width:72px;height:72px;border:3px solid var(--bg)}
 #sv{position:fixed;inset:0;z-index:50;background:#000;display:flex;flex-direction:column;justify-content:center;color:#fff}
 #sv img,#sv video{width:100%;max-height:78vh;object-fit:contain}
 #splash{position:fixed;inset:0;z-index:99;background:var(--g);display:flex;align-items:center;justify-content:center;transition:opacity .4s}
 #splash svg{animation:pulse 1.2s infinite}@keyframes pulse{50%{transform:scale(1.15)}}
 #splash.out{opacity:0}
+#sq{border-radius:99px;padding:13px 18px;margin:0 0 10px;font-size:1em}
+.act button{font-size:1.2em;padding:10px 20px}
 @media(prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 </head>
 <body>
 <div id="splash"><svg width="84" height="84" viewBox="0 0 48 48"><rect width="48" height="48" rx="11" fill="#fff"/><text x="24" y="33" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-style="italic" font-size="24" fill="#4f46e5">MU</text></svg></div>
 <header>
-  <svg width="30" height="30" viewBox="0 0 48 48"><rect width="48" height="48" rx="11" fill="#fff"/><text x="24" y="33" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-style="italic" font-size="24" fill="#4f46e5">MU</text></svg>
+  <svg width="40" height="40" viewBox="0 0 48 48"><rect width="48" height="48" rx="11" fill="#fff"/><text x="24" y="33" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-style="italic" font-size="24" fill="#4f46e5">MU</text></svg>
   <span>Meeting University of N'djamena</span>
   <button id="th" aria-label="Changer de thème"></button>
 </header>
@@ -148,7 +150,7 @@ app.onclick=async e=>{
       await api('/posts/'+id+'/comments',{method:'POST',body:{text:v}});$('#cm'+id).innerHTML='';openCm(id)}
     else if(x=g('data-p')){userView(x.dataset.p)}
     else if(x=g('data-s')){story(x.dataset.s)}
-    else if(g('data-add')){$('#m').click()}
+    else if(g('data-add')){$('#sf').click()}
   }catch(err){alert(err.message)}};
 
 async function openCm(id){
@@ -161,13 +163,13 @@ async function openCm(id){
 const postHtml=p=>`<div class="card" id="p${p.id}"><div class="row"><div class="row u" data-p="${p.uid}">${av(p)}<div><b>${E(p.name)}</b>${p.faculty?`<span class="chip">${E(p.faculty)}</span>`:''}<div class="mu">${fmt(p.ts)}</div></div></div>
   ${p.uid==me.id?`<button class="alt" style="margin-left:auto" data-d="${p.id}">Suppr.</button>`:''}</div>
   <p>${E(p.text)}</p>${p.type=='image'?`<div class="mw"><img class="media" src="${E(p.media)}"></div>`:p.type=='video'?`<div class="mw"><video class="media" controls src="${E(p.media)}"></video></div>`:''}
-  <div class="row" style="margin-top:10px"><button class="alt" data-l="${p.id}">${p.liked?'❤️':'🤍'} ${p.likes}</button><button class="alt" data-c="${p.id}">💬 ${p.ncom}</button></div>
+  <div class="row act" style="margin-top:10px"><button class="alt" data-l="${p.id}">${p.liked?'❤️':'🤍'} ${p.likes}</button><button class="alt" data-c="${p.id}">💬 ${p.ncom}</button></div>
   <div class="cm" id="cm${p.id}"></div></div>`;
 
 function buildStories(ps){
   const lim=Date.now()-864e5;S={};
   ps.filter(p=>p.media&&new Date(p.ts)>lim).reverse().forEach(p=>(S[p.uid]=S[p.uid]||{u:p,l:[]}).l.push(p));
-  $('#s').innerHTML=`<div class="st" data-add="1"><span class="ring add"><div class="av" style="background:var(--bg);color:var(--pr)">＋</div></span><div>Ma story</div></div>`+
+  $('#s').innerHTML=`<div class="st" data-add="1"><span class="ring add"><div class="av" style="background:var(--bg);color:var(--pr);font-size:2em">＋</div></span><div>Ma story</div></div>`+
     Object.entries(S).map(([id,s])=>`<div class="st" data-s="${id}"><span class="ring">${av(s.u)}</span><div>${E(s.u.name.split(' ')[0])}</div></div>`).join('')}
 
 function story(id){
@@ -182,9 +184,14 @@ function story(id){
   o.onclick=e=>{i+=e.clientX<innerWidth/3?-1:1;show()};show()}
 
 async function feedView(){
-  $('#v').innerHTML=`<div class="stories" id="s"></div><div class="card"><textarea id="t" rows="2" placeholder="Quoi de neuf sur le campus ?"></textarea>
+  $('#v').innerHTML=`<input id="sq" type="search" placeholder="🔍 Rechercher une publication, un étudiant…"><input id="sf" type="file" accept="image/*,video/*" hidden><div class="stories" id="s"></div><div class="card"><textarea id="t" rows="2" placeholder="Quoi de neuf sur le campus ?"></textarea>
   <input id="m" type="file" accept="image/*,video/*"><div id="pv"></div><p class="err" id="e"></p><button id="go">Publier</button></div>
   <div id="l"></div><button class="alt" id="more" style="width:100%;display:none">Voir plus</button>`;
+  const flt=()=>{const q=$('#sq').value.trim().toLowerCase();document.querySelectorAll('#l .card').forEach(c=>c.style.display=c.textContent.toLowerCase().includes(q)?'':'none')};
+  $('#sq').oninput=flt;
+  $('#sf').onchange=async e=>{const f=e.target.files[0];if(!f)return;const l=document.querySelector('[data-add] div:last-child');if(l)l.textContent='Envoi…';
+    const fd=new FormData();fd.append('text','✨');fd.append('media',f);
+    try{await api('/posts',{method:'POST',body:fd});feedView()}catch(x){alert(x.message);feedView()}};
   $('#m').onchange=e=>{const f=e.target.files[0];
     $('#pv').innerHTML=!f?'':f.type.startsWith('video')?`<video class="media" controls src="${URL.createObjectURL(f)}"></video>`:`<img class="media" src="${URL.createObjectURL(f)}">`};
   $('#go').onclick=async()=>{const fd=new FormData();fd.append('text',$('#t').value);if($('#m').files[0])fd.append('media',$('#m').files[0]);
@@ -193,7 +200,7 @@ async function feedView(){
   let before=0,first=true;
   const load=async()=>{const ps=await api('/posts'+(before?'?before='+before:''));
     if(first){buildStories(ps);if(!ps.length)$('#l').innerHTML='<p class="mu">Aucune publication. Écris la première !</p>'}
-    first=false;$('#l').insertAdjacentHTML('beforeend',ps.map(postHtml).join(''));
+    first=false;$('#l').insertAdjacentHTML('beforeend',ps.map(postHtml).join(''));flt();
     if(ps.length)before=ps[ps.length-1].ts;$('#more').style.display=ps.length==20?'block':'none'};
   $('#more').onclick=load;load()}
 
@@ -257,4 +264,4 @@ const hide=()=>{const s=$('#splash');if(!s)return;s.classList.add('out');setTime
   authView();setTimeout(hide,700)})();
 </script>
 </body>
-</html> 
+</html>
