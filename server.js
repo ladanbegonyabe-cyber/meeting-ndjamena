@@ -19,6 +19,11 @@ const UB = new Map(), UN = new Map(), PM = new Map(), CM = new Map(), UK = new M
 const pk = (a, b) => a < b ? a + '|' + b : b + '|' + a;
 function addMsg(m) { const k = pk(m.from, m.to); if (!CM.has(k)) CM.set(k, []); CM.get(k).push(m); for (const x of [m.from, m.to]) { if (!UK.has(x)) UK.set(x, new Set()); UK.get(x).add(k) } }
 function reindex() { UB.clear(); UN.clear(); PM.clear(); CM.clear(); UK.clear(); D.users.forEach(u => { UB.set(u.id, u); UN.set(u.name.toLowerCase(), u) }); D.posts.forEach(p => PM.set(p.id, p)); D.msgs.forEach(addMsg); if(!D.notifs) D.notifs=[]; if(!D.reports) D.reports=[]; }
+
+// ===== APPELS VOCAL / VIDEO - STOCKAGE EN MEMOIRE (ne pas sauvegarder en DB) =====
+let CALLS = {};
+function cleanCalls(){ const now=Date.now(); for(let k in CALLS){ if(now-CALLS[k].created>90000 && CALLS[k].status==='ringing') delete CALLS[k]; if(now-CALLS[k].created>3600000) delete CALLS[k]; } }
+
 async function load() { if (pool) { await pool.query('CREATE TABLE IF NOT EXISTS kv(k text PRIMARY KEY, v text NOT NULL)'); const r = await pool.query('SELECT k,v FROM kv'); for (const row of r.rows) if (COLS.includes(row.k)) D[row.k] = JSON.parse(row.v); } if(!D.notifs) D.notifs=[]; if(!D.reports) D.reports=[]; reindex(); }
 const save = () => { dirty = true; if (!timer) timer = setTimeout(flush, 2500) };
 async function flush() { timer = null; if (!dirty || busy) return; dirty = false; busy = true; try { const now = Date.now(); for (const t in D.tok) if (D.tok[t].exp < now) delete D.tok[t]; if (pool) { for (const k of COLS) await pool.query('INSERT INTO kv(k,v) VALUES($1,$2) ON CONFLICT (k) DO UPDATE SET v=$2', [k, JSON.stringify(D[k])]); } } catch (e) { dirty = true } busy = false; if (dirty && !timer) timer = setTimeout(flush, 2500) }
@@ -63,7 +68,45 @@ const P = {
   pass: async (u, b) => { if (!await checkPw(S(b.old, 200), u.pass)) return { e: 'Ancien mot de passe incorrect' }; u.pass = await hashPw(S(b.pass, 200)); save(); return { ok: 1 } },
   photo: (u, b) => { u.photo = String(b.img||'').slice(0, 500000); save(); return { ok: 1 } },
   poll: () => ({ un: 0, sig: 0, last: null }),
-  logout: (u, b, h) => { const tk = h['x-token']; if (tk) delete D.tok[sha(tk)]; save(); return { ok: 1 } }
+  logout: (u, b, h) => { const tk = h['x-token']; if (tk) delete D.tok[sha(tk)]; save(); return { ok: 1 } },
+
+  // ===== APPELS VOCAL / VIDEO - DEBUT =====
+  call_start: (u, b) => {
+    cleanCalls();
+    const callId = Date.now()+''+Math.random().toString(36).slice(2);
+    CALLS[callId] = { id: callId, from: u.id, fromName: u.name, fromPhoto: u.photo||'', to: b.to, type: b.type||'audio', status: 'ringing', offer: null, answer: null, allCands: [], created: Date.now() };
+    return { callId };
+  },
+  call_check: (u, b) => {
+    cleanCalls();
+    const inc = Object.values(CALLS).find(c => c.to===u.id && c.status==='ringing');
+    return { incoming: inc ? { id: inc.id, from: inc.from, fromName: inc.fromName, fromPhoto: inc.fromPhoto, type: inc.type } : null };
+  },
+  call_poll: (u, b) => {
+    const c = CALLS[b.callId]; if(!c) return { status:'ended' };
+    let out = { status: c.status };
+    if(c.offer && c.to===u.id) out.offer = c.offer;
+    if(c.answer && c.from===u.id) out.answer = c.answer;
+    const mine = (c.allCands||[]).filter(x=>x.to===u.id);
+    out.cands = mine.map(x=>x.cand);
+    c.allCands = (c.allCands||[]).filter(x=>x.to!==u.id);
+    return out;
+  },
+  call_signal: (u, b) => {
+    const c = CALLS[b.callId]; if(!c) return { ok:1 };
+    if(b.offer) c.offer = b.offer;
+    if(b.answer) c.answer = b.answer;
+    if(b.accept) c.status = 'accepted';
+    if(b.decline) c.status = 'declined';
+    if(b.end){ c.status='ended'; delete CALLS[b.callId]; return { ok:1 }; }
+    if(b.cand){
+      c.allCands = c.allCands||[];
+      const to = u.id===c.from ? c.to : c.from;
+      c.allCands.push({ to, cand: b.cand, from: u.id });
+    }
+    return { ok:1 };
+  },
+  // ===== APPELS VOCAL / VIDEO - FIN =====
 };
 function getHTML(){ try { return fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8'); } catch(e){ return '<h1>public/index.html introuvable</h1>'; } }
 const srv = http.createServer((q, r) => {
