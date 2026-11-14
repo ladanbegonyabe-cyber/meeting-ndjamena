@@ -1,14 +1,15 @@
 {
   "name": "meeting-ndjamena",
-  "version": "2.0.0",
+  "version": "1.0.0",
+  "description": "Meeting University of N'djamena - Reseau des etudiants",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "engines": {
-    "node": ">=18"
+    "node": "18.x"
   },
   "dependencies": {
-    "pg": "^8.11.3"
+    "express": "^4.18.2"
   }
 }
