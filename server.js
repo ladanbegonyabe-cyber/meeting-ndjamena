@@ -103,11 +103,22 @@ const P = {
   },
 };
 function getHTML(){ try { return fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8'); } catch(e){ return '<h1>public/index.html introuvable</h1>'; } }
+const STATIC = { '/manifest.json': 'application/manifest+json', '/sw.js': 'text/javascript', '/icon-192.png': 'image/png', '/icon-512.png': 'image/png' };
 const srv = http.createServer((q, r) => {
   if (q.method === 'POST' && q.url.startsWith('/api/')) {
     let s = ''; q.on('data', d => s += d); q.on('end', async () => { let o = { e: 'Erreur' }; try { const b = JSON.parse(s || '{}'), n = q.url.slice(5); if (A[n]) o = await A[n](b); else { const u = auth(q.headers['x-token']); if (!u) { r.writeHead(401, SEC); return r.end('{}') } if (P[n]) o = await P[n](u, b); } } catch (e) {} r.writeHead(200, { 'Content-Type': 'application/json', ...SEC }); r.end(JSON.stringify(o)); }); return;
   }
   if (q.url.startsWith('/photo/')) { const uid = q.url.split('/')[2].split('?')[0]; const u = UB.get(uid); if (u && u.photo) { const m = u.photo.match(/^data:(image\/\w+);base64,(.+)$/); if (m) { r.writeHead(200, { 'Content-Type': m[1] }); return r.end(Buffer.from(m[2], 'base64')); } } r.writeHead(404); return r.end(''); }
+  const pathname = q.url.split('?')[0];
+  if (STATIC[pathname]) {
+    try {
+      const data = fs.readFileSync(path.join(__dirname, 'public', pathname));
+      const h = { 'Content-Type': STATIC[pathname], ...SEC };
+      if (pathname === '/sw.js') { h['Service-Worker-Allowed'] = '/'; h['Cache-Control'] = 'no-cache'; }
+      r.writeHead(200, h); return r.end(data);
+    } catch (e) { r.writeHead(404); return r.end(''); }
+  }
   r.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', ...SEC }); r.end(getHTML());
 });
 load().then(() => srv.listen(process.env.PORT || 3000, () => console.log('Serveur prêt')));
+ 
