@@ -6,6 +6,31 @@
 <meta name="theme-color" content="#d6ecff">
 <title>Meeting University of N'djamena</title>
 <style>
+/* ===== FIX COMPLET - PLUS DE CARRE JAUNE - DEBUT ===== */
+*{
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-touch-callout: none !important;
+  outline: none !important;
+}
+*:focus, *:active, *:hover, *:visited, *:focus-visible{
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+button, a, div, span, nav, nav *, input, select, textarea{
+  -webkit-tap-highlight-color: transparent !important;
+  outline: none !important;
+  -webkit-focus-ring-color: transparent !important;
+}
+button:focus, a:focus, div:focus, input:focus{
+  outline: none !important;
+  box-shadow: none !important;
+}
+nav button, nav a, nav div{
+  outline: none !important;
+  box-shadow: none !important;
+}
+/* ===== FIX COMPLET - PLUS DE CARRE JAUNE - FIN ===== */
 :root{--bg:#d6ecff;--card:#ffffff;--line:#b9d9f5;--t:#10224a;--mut:#5b6f99;--g:linear-gradient(135deg,#2f6bff,#8a4dff)}
 [data-theme="dark"]{--bg:#0f1420;--card:#1a2233;--line:#2a3550;--t:#eef2ff;--mut:#9aa8c7}
 *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
@@ -59,7 +84,29 @@ nav button.on{color:#a78bff}
 </style>
 </head>
 <body>
-<div id="toast"></div><div id="ov"></div><div id="app"><div class="w"><h1 style="margin-top:40px">Meeting University of N'djamena</h1><p class="mut">Chargement...</p><div class="card"><div class="skel" style="height:120px"></div></div></div></div>
+<div id="toast"></div><div id="ov"></div>
+<div id="callOv" style="position:fixed;inset:0;background:#000;display:none;z-index:100;color:#fff;flex-direction:column">
+  <video id="remoteV" autoplay playsinline style="flex:1;width:100%;background:#000;object-fit:cover"></video>
+  <video id="localV" autoplay muted playsinline style="position:absolute;top:12px;right:12px;width:110px;height:150px;background:#222;border-radius:14px;object-fit:cover"></video>
+  <div style="position:absolute;top:12px;left:12px"><b id="callName">Appel...</b><div id="callStatus" class="mut" style="color:#fff">Connexion...</div></div>
+  <div style="position:absolute;bottom:20px;left:0;right:0;display:flex;justify-content:center;gap:14px">
+    <button onclick="toggleMic()" id="micBtn" style="width:56px;height:56px;border-radius:50%;border:0;background:#fff;font-size:22px">🎙️</button>
+    <button onclick="toggleCam()" id="camBtn" style="width:56px;height:56px;border-radius:50%;border:0;background:#fff;font-size:22px">📷</button>
+    <button onclick="endCall()" style="width:64px;height:64px;border-radius:50%;border:0;background:#ff3b30;font-size:26px">📞</button>
+  </div>
+</div>
+<div id="incomingOv" style="position:fixed;inset:0;background:#000c;display:none;place-items:center;z-index:101;color:#fff">
+  <div style="background:#1a2233;padding:22px;border-radius:20px;text-align:center;max-width:320px;width:90%">
+    <div id="incomingAvatar" style="margin:auto"></div>
+    <h2 id="incomingName" style="margin:12px 0 4px">Quelqu'un t'appelle</h2>
+    <p id="incomingType" class="mut" style="color:#c7d2ee">Appel vocal</p>
+    <div style="display:flex;gap:12px;justify-content:center;margin-top:18px">
+      <button onclick="declineCall()" style="width:60px;height:60px;border-radius:50%;border:0;background:#ff3b30;font-size:26px">✖️</button>
+      <button onclick="acceptCall()" style="width:60px;height:60px;border-radius:50%;border:0;background:#00c853;font-size:26px">📞</button>
+    </div>
+  </div>
+</div>
+<div id="app"><div class="w"><h1 style="margin-top:40px">Meeting University of N'djamena</h1><p class="mut">Chargement...</p><div class="card"><div class="skel" style="height:120px"></div></div></div></div>
 <script>
 if(localStorage.theme==='dark') document.documentElement.setAttribute('data-theme','dark');
 window.onerror=function(m){try{var t=document.getElementById('toast');t.textContent='Erreur : '+m;t.style.display='block';setTimeout(function(){t.style.display='none'},3000)}catch(e){}};
@@ -72,7 +119,6 @@ const toast=m=>{const t=$('#toast');if(!t)return;t.textContent=m;t.style.display
 const ago=t=>{const m=(Date.now()-t)/6e4|0;return m<1?"à l'instant":m<60?m+' min':m<1440?(m/60|0)+' h':(m/1440|0)+' j'};
 const av=(n,id,st='',photo='')=>{let inner='';if(n&&n.includes('Anonyme')){inner='👻'}else if(photo){inner=`<img src="${photo}" onerror="this.remove()">`}else if(id){inner=`${E((n||'?')[0]).toUpperCase()}<img src="/photo/${id}?v=${localStorage.pv||0}" onerror="this.remove()">`}else{inner=E((n||'?')[0]).toUpperCase()}return `<div class="av" style="${st}">${inner}</div>`};
 const vb=v=>v?' <span class="vk">✓</span>':'';
-// NOUVELLES FILIERES - Biologie, Math-Physique, Mathématiques, Sciences Techniques, Physique-Chimie + anciennes
 const CLASSES=['Général','Droit L1','Droit L2','Droit L3','Médecine L1','Médecine L2','Médecine L3','Biologie L1','Biologie L2','Biologie L3','Math-Physique L1','Math-Physique L2','Math-Physique L3','Mathématiques L1','Mathématiques L2','Mathématiques L3','Sciences Techniques L1','Sciences Techniques L2','Sciences Techniques L3','Physique-Chimie L1','Physique-Chimie L2','Physique-Chimie L3','Informatique L1','Informatique L2','Informatique L3','Économie L1','Économie L2','Économie L3','Lettres L1','Lettres L2','Lettres L3','Sciences L1','Sciences L2','Anglais L1','Anglais L2'];
 const IC={home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>',search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',new:'<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>',msg:'<path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12z"/>',me:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>',heart:'<path d="M12 20.5S3 15 3 9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6-9 11.5-9 11.5z"/>',bm:'<path d="M6 3h12v18l-6-4-6 4z"/>',flag:'<path d="M5 21V4h12l-2 4 2 4H5"/>',mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',send:'<path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4z"/>',back:'<path d="M15 5l-7 7 7 7"/>',stop:'<rect x="6" y="6" width="12" height="12" rx="2"/>',image:'<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/>',file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',x:'<path d="M6 6l12 12M18 6 6 18"/>',lib:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>'};
 const IE={home:'🏡',search:'🔎',new:'✨',lib:'📚',msg:'💬',me:'😎',heart:'🤍',bm:'📌',flag:'🚩',mic:'🎙️',send:'🚀',back:'⬅️',stop:'⏹️',image:'🖼️',file:'📄',x:'✖️'};
@@ -213,7 +259,7 @@ function msgMediaHTML(m){
   if(m.img.includes('application/pdf')) return `<a href="${m.img}" target="_blank" style="color:inherit">📄 Ouvrir le PDF</a><br><a class="ghost" href="${m.img}" download="msg-doc-${m.id}.pdf" style="text-decoration:none;display:inline-block">⬇️ Enregistrer PDF</a>${m.text?`<p>${E(m.text)}</p>`:''}`;
   return `<img src="${m.img}">${m.text?`<p>${E(m.text)}</p>`:''}<a class="ghost" href="${m.img}" download="msg-photo-${m.id}.jpg" style="text-decoration:none;display:inline-block">⬇️ Enregistrer photo</a>`;
 }
-async function convo(){const r=await api('convo',{with:cur});const u=await api('user',{id:cur});return `<div class="row"><button class="ic" onclick="go('msg')">${I('back',24)}</button>${av(u.name||'?',cur,'',u.photo)}<div><b>${E(u.name)}${vb(u.v)}</b></div></div><div id="ml" style="padding:10px 0;min-height:60vh">${(r.m||[]).map(m=>`<div class="b ${m.from===me.id?'me':''}">${m.ref?`<div style="border-left:3px solid #fff8;padding-left:8px;font-size:13px;opacity:.85">Réf : ${E(m.ref)}</div>`:''}${m.audio?`<audio controls src="${m.audio}" style="max-width:100%"></audio>`:msgMediaHTML(m)}${m.from===me.id?`<div class="mut" style="text-align:right;font-size:11px">${m.seen?'vu ✓✓':'envoyé ✓'}</div>`:''}</div>`).join('')}</div><div class="row" style="position:sticky;bottom:58px;background:var(--bg);padding:6px 0"><input id="mt" placeholder="Message…" onkeydown="event.key==='Enter'&&snd()"><button class="ic" onclick="sendMsgMedia()" title="Envoyer photo / vidéo / PDF">📎</button><button class="ic" id="mic" onclick="mic()">${I('mic',24)}</button><button class="ic" style="color:#a78bff" onclick="snd()">${I('send',24)}</button></div>`}
+async function convo(){const r=await api('convo',{with:cur});const u=await api('user',{id:cur});return `<div class="row"><button class="ic" onclick="go('msg')">${I('back',24)}</button>${av(u.name||'?',cur,'',u.photo)}<div class="sp"><b>${E(u.name)}${vb(u.v)}</b></div><button class="ic" onclick="startCall('${cur}','audio')" style="font-size:22px">📞</button><button class="ic" onclick="startCall('${cur}','video')" style="font-size:22px">🎥</button></div><div id="ml" style="padding:10px 0;min-height:60vh">${(r.m||[]).map(m=>`<div class="b ${m.from===me.id?'me':''}">${m.ref?`<div style="border-left:3px solid #fff8;padding-left:8px;font-size:13px;opacity:.85">Réf : ${E(m.ref)}</div>`:''}${m.audio?`<audio controls src="${m.audio}" style="max-width:100%"></audio>`:msgMediaHTML(m)}${m.from===me.id?`<div class="mut" style="text-align:right;font-size:11px">${m.seen?'vu ✓✓':'envoyé ✓'}</div>`:''}</div>`).join('')}</div><div class="row" style="position:sticky;bottom:58px;background:var(--bg);padding:6px 0"><input id="mt" placeholder="Message…" onkeydown="event.key==='Enter'&&snd()"><button class="ic" onclick="sendMsgMedia()" title="Envoyer photo / vidéo / PDF">📎</button><button class="ic" id="mic" onclick="mic()">${I('mic',24)}</button><button class="ic" style="color:#a78bff" onclick="snd()">${I('send',24)}</button></div>`}
 async function sendMsgMedia(){const f=await pickMedia();if(!f)return;toast('Envoi du média…');let data='';if(f.type.startsWith('image/')){data=await img(f)}else{data=await readFileAsDataURL(f)}await api('send',{to:cur,text:$('#mt')?.value||'',img:data});render();toast('Média envoyé ✅')}
 async function snd(a){const t=$('#mt')?.value;if(!t&&!a)return;await api('send',{to:cur,text:a?'':t,audio:a||''});render()}
 async function mic(){if(rec&&rec.state==='recording'){rec.stop();return}try{const s=await navigator.mediaDevices.getUserMedia({audio:true});chunks=[];rec=new MediaRecorder(s);rec.ondataavailable=e=>chunks.push(e.data);rec.onstop=()=>{s.getTracks().forEach(t=>t.stop());$('#mic').innerHTML=I('mic',24);const f=new FileReader();f.onload=()=>snd(f.result);f.readAsDataURL(new Blob(chunks,{type:rec.mimeType}))};rec.start();$('#mic').innerHTML=I('stop',24);toast('Enregistrement…')}catch(e){toast('Micro refusé')}}
@@ -235,6 +281,85 @@ async function tick(){if(!tok||document.hidden)return;const p=await api('poll');
 setInterval(()=>{if(tok) fetch('/api/poll',{method:'POST',headers:{'Content-Type':'application/json','x-token':tok},body:'{}'}).catch(()=>{})},600000);
 let startY=0;document.addEventListener('touchstart',e=>{startY=e.touches[0].clientY},{passive:true});
 document.addEventListener('touchend',e=>{const dy=e.changedTouches[0].clientY-startY;if(dy>120&&window.scrollY===0&&tok&&view==='home'){refreshFeed()}},{passive:true});
+// ===== APPELS VOCAL / VIDEO - DEBUT =====
+let pc=null, localStream=null, callWith=null, callType='audio', callId=null, callPollTimer=null, micOn=true, camOn=true, incomingCall=null;
+async function startCall(to,type){
+  callWith=to; callType=type;
+  const u=await api('user',{id:to});
+  document.getElementById('callName').textContent = (u.name||'...') + (type==='video'?' - Vidéo':' - Vocal');
+  document.getElementById('callStatus').textContent='Appel en cours...';
+  document.getElementById('callOv').style.display='flex';
+  document.getElementById('localV').style.display = type==='video'?'block':'none';
+  try{
+    localStream = await navigator.mediaDevices.getUserMedia({audio:true, video: type==='video'?{width:640,height:480}:false});
+    document.getElementById('localV').srcObject = localStream;
+  }catch(e){ toast('Micro / Caméra refusé'); endCall(); return; }
+  const r = await api('call_start',{to, type});
+  callId = r.callId;
+  createPeer(true);
+  startCallPoll();
+  toast('Appel lancé, attends que ton ami décroche...');
+}
+function createPeer(isCaller){
+  pc = new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
+  if(localStream) localStream.getTracks().forEach(t=>pc.addTrack(t, localStream));
+  pc.ontrack = e=>{ document.getElementById('remoteV').srcObject = e.streams[0]; document.getElementById('callStatus').textContent='En appel...'; };
+  pc.onicecandidate = e=>{ if(e.candidate && callId) api('call_signal',{callId, cand:e.candidate}); };
+  if(isCaller){ pc.createOffer().then(o=>{ pc.setLocalDescription(o); api('call_signal',{callId, offer:o}); }); }
+}
+function startCallPoll(){
+  clearInterval(callPollTimer);
+  callPollTimer = setInterval(async()=>{
+    if(!callId) return;
+    const d = await api('call_poll',{callId});
+    if(d.status==='declined'){ toast('Appel refusé'); endCall(); return; }
+    if(d.status==='ended'){ toast('Appel terminé'); endCall(); return; }
+    if(d.offer && pc && !pc.remoteDescription){ await pc.setRemoteDescription(new RTCSessionDescription(d.offer)); const ans = await pc.createAnswer(); await pc.setLocalDescription(ans); api('call_signal',{callId, answer:ans}); }
+    if(d.answer && pc && !pc.remoteDescription){ await pc.setRemoteDescription(new RTCSessionDescription(d.answer)); }
+    if(d.cands) for(let c of d.cands){ try{ await pc.addIceCandidate(new RTCIceCandidate(c)); }catch(e){} }
+  },1500);
+}
+async function acceptCall(){
+  document.getElementById('incomingOv').style.display='none';
+  callWith = incomingCall.from; callType = incomingCall.type; callId = incomingCall.id;
+  document.getElementById('callName').textContent = incomingCall.fromName + (callType==='video'?' - Vidéo':' - Vocal');
+  document.getElementById('callOv').style.display='flex';
+  document.getElementById('localV').style.display = callType==='video'?'block':'none';
+  try{ localStream = await navigator.mediaDevices.getUserMedia({audio:true, video: callType==='video'?true:false}); document.getElementById('localV').srcObject = localStream; }catch(e){ toast('Micro refusé'); endCall(); return; }
+  await api('call_signal',{callId, accept:true});
+  createPeer(false);
+  startCallPoll();
+}
+async function declineCall(){
+  document.getElementById('incomingOv').style.display='none';
+  if(incomingCall) await api('call_signal',{callId:incomingCall.id, decline:true});
+  incomingCall=null;
+}
+function toggleMic(){ micOn=!micOn; if(localStream) localStream.getAudioTracks().forEach(t=>t.enabled=micOn); document.getElementById('micBtn').textContent = micOn?'🎙️':'🔇'; }
+function toggleCam(){ camOn=!camOn; if(localStream) localStream.getVideoTracks().forEach(t=>t.enabled=camOn); document.getElementById('camBtn').textContent = camOn?'📷':'🚫'; }
+async function endCall(){
+  clearInterval(callPollTimer);
+  if(callId) await api('call_signal',{callId, end:true}).catch(()=>{});
+  if(pc) pc.close(); pc=null;
+  if(localStream) localStream.getTracks().forEach(t=>t.stop()); localStream=null;
+  callId=null; incomingCall=null; callWith=null;
+  document.getElementById('callOv').style.display='none';
+  document.getElementById('incomingOv').style.display='none';
+  document.getElementById('remoteV').srcObject=null;
+}
+setInterval(async()=>{
+  if(!tok || callId || !me) return;
+  const d = await api('call_check').catch(()=>null);
+  if(d && d.incoming && !incomingCall){
+    incomingCall = d.incoming;
+    document.getElementById('incomingName').textContent = d.incoming.fromName;
+    document.getElementById('incomingType').textContent = d.incoming.type==='video'?'Appel vidéo 🎥':'Appel vocal 📞';
+    document.getElementById('incomingAvatar').innerHTML = av(d.incoming.fromName, d.incoming.from,'width:72px;height:72px;font-size:30px', d.incoming.fromPhoto||'');
+    document.getElementById('incomingOv').style.display='grid';
+    try{ new Audio('https://actions.google.com/sounds/v1/alarms/phone_ringtone.ogg').play(); }catch(e){}
+  }
+},3000);
+// ===== APPELS VOCAL / VIDEO - FIN =====
 render();
 </script>
 </body>
