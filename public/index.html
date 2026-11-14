@@ -2,209 +2,208 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Meeting University of N'djamena</title>
 <style>
-body{background:#d6ecff;font-family:system-ui,sans-serif;margin:0;padding-bottom:70px;color:#10224a}
+*{box-sizing:border-box}
+body{background:#d6ecff;font-family:system-ui,sans-serif;margin:0;padding-bottom:70px;color:#10224a;overflow-x:hidden}
 .w{max-width:560px;margin:auto;padding:12px}
 .card{background:#fff;border-radius:20px;padding:14px;margin:12px 0;box-shadow:0 2px 12px #4f8fd622}
-input,textarea,select{width:100%;padding:12px;border:1px solid #b9d9f5;border-radius:14px;margin:5px 0;box-sizing:border-box;font-size:16px}
+input,textarea,select{width:100%;padding:12px;border:1px solid #b9d9f5;border-radius:14px;margin:5px 0;font-size:16px;background:#fff}
 .btn{background:linear-gradient(135deg,#2f6bff,#8a4dff);border:0;border-radius:14px;padding:12px;color:#fff;font-weight:700;width:100%;cursor:pointer}
-.ghost{background:none;border:1px solid #b9d9f5;border-radius:12px;padding:8px 12px;cursor:pointer}
-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;display:flex;border-top:1px solid #ddd;z-index:5}
+.ghost{background:none;border:1px solid #b9d9f5;border-radius:12px;padding:8px 12px;cursor:pointer;background:#fff}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;display:flex;border-top:1px solid #ddd;z-index:20}
 nav button{flex:1;border:0;background:none;padding:12px;font-size:20px;cursor:pointer}
 .av{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#2f6bff,#8a4dff);display:grid;place-items:center;color:#fff;font-weight:800;overflow:hidden;flex:none}
 .av img{width:100%;height:100%;object-fit:cover}
 .row{display:flex;gap:10px;align-items:center}.sp{flex:1}.mut{color:#5b6f99;font-size:14px}
-.post img,.post video{width:100%;border-radius:14px;margin:8px 0}
+img{max-width:100%;height:auto}
+.post img,.post video{width:100%;max-height:340px;object-fit:contain;background:#000;border-radius:14px;margin:8px 0;display:block}
 .chips{display:flex;gap:8px;overflow-x:auto;padding:4px 0}.chips button{white-space:nowrap;background:#fff;border:1px solid #b9d9f5;border-radius:20px;padding:8px 14px;cursor:pointer}.chips .on{background:linear-gradient(135deg,#2f6bff,#8a4dff);color:#fff;border:0}
-.offlineWrap{background:linear-gradient(180deg,#1e2a5a 0%,#0f8a8a 55%,#0fb896 100%);border-radius:24px;padding:20px 16px;text-align:center;color:#fff;margin:12px 0}
-.offlineWrap svg{width:100%;max-width:320px;height:auto;display:block;margin:auto}
+.offlineWrap{background:linear-gradient(180deg,#1e2a5a 0%,#0f8a8a 55%,#0fb896 100%);border-radius:24px;padding:14px 12px;text-align:center;color:#fff;margin:12px 0}
+.offlineWrap svg{width:180px;max-width:60%;height:auto;display:block;margin:auto}
+.offlineWrap h2{font-size:19px;margin:8px 0 4px}.offlineWrap p{font-size:14px;opacity:.9}
 .offlineBadge{display:inline-block;background:#7ee787;color:#0a3a2e;font-weight:800;border-radius:20px;padding:6px 18px;font-size:13px;letter-spacing:2px}
 .offlineBar{position:fixed;top:0;left:0;right:0;z-index:40;background:#ff4d6d;color:#fff;text-align:center;padding:8px;font-weight:700;font-size:14px;display:none}
 .bookcover{width:56px;height:74px;border-radius:8px;background:linear-gradient(135deg,#2f6bff,#8a4dff);display:grid;place-items:center;font-size:28px;color:#fff;flex:none}
+.msg{max-width:80%;padding:10px 12px;border-radius:16px;margin:6px 0;font-size:15px;word-break:break-word}.meMsg{background:#2f6bff;color:#fff;margin-left:auto}.otherMsg{background:#eef2ff}
+.callBox{position:fixed;inset:0;background:#0a0a1a;z-index:100;color:#fff;display:flex;flex-direction:column}
+.callBox video{width:100%;flex:1;object-fit:cover;background:#000}
+.callBtn{width:56px;height:56px;border-radius:50%;border:0;font-size:24px;cursor:pointer}
 </style>
 </head>
 <body>
 <div id="offlineBar" class="offlineBar">📶 Hors-ligne — vérifie ta connexion</div>
-<div id="app"><div class="w"><h1>Meeting University of N'djamena</h1><p>Chargement...</p></div></div>
+<div id="app"><div class="w"><h1>Meeting University<br>of N'djamena</h1><p>Chargement rapide...</p></div></div>
 <script>
-var tok = localStorage.getItem('t') || '';
-var me = null;
-var view = 'home';
-var isOffline = !navigator.onLine;
-var libCat = 'Tout';
-var libQ = '';
-function E(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function updateOffline(){ var b=document.getElementById('offlineBar'); if(b) b.style.display = isOffline ? 'block' : 'none'; }
+var tok=localStorage.getItem('t')||'';
+var me=null, view='home', isOffline=!navigator.onLine;
+var libCat='Tout', libQ='', chatWith=null, chatName='', callTimer=null, pc=null, localStream=null, remoteStream=null;
+function E(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function updateOffline(){var b=document.getElementById('offlineBar'); if(b) b.style.display=isOffline?'block':'none';}
 function offlineHTML(){
-  return '<div class="offlineWrap">'
-    + '<svg viewBox="0 0 360 260"><g stroke="#2ee6a8" stroke-width="9" stroke-linecap="round" fill="none"><path d="M180 22 Q230 55 275 22"/><path d="M195 45 Q225 68 255 45"/><path d="M210 68 Q225 80 240 68"/></g><line x1="175" y1="10" x2="280" y2="95" stroke="#ff5c7a" stroke-width="9" stroke-linecap="round"/><circle cx="225" cy="98" r="9" fill="#2ee6a8"/>'
-    + '<rect x="118" y="115" width="48" height="84" rx="10" fill="#fff"/><text x="142" y="148" font-size="9" text-anchor="middle" fill="#0f8a8a" font-weight="700">no signal</text><text x="142" y="176" font-size="10" text-anchor="middle" fill="#ff5c7a">📶✕</text>'
-    + '<circle cx="215" cy="105" r="22" fill="#ffb88a"/><path d="M192 100 Q195 78 215 78 Q238 78 238 102 Q238 112 232 112 L198 112 Q192 110 192 100Z" fill="#2b1a12"/><circle cx="207" cy="104" r="3" fill="#111"/><circle cx="222" cy="104" r="3" fill="#111"/><path d="M208 114 Q215 119 222 114" stroke="#111" stroke-width="2" fill="none" stroke-linecap="round"/>'
-    + '<path d="M185 125 Q210 115 235 125 L250 190 L175 190 Z" fill="#12b5a5"/><rect x="240" y="165" width="48" height="58" rx="12" fill="#e8c88a"/><rect x="142" y="190" width="130" height="28" rx="10" fill="#111"/></svg>'
-    + '<div class="offlineBadge">OFFLINE</div><h2 style="margin:10px 0 4px">Tu es hors-ligne 📶</h2><p style="opacity:.9">Pas de panique, tes derniers posts sont sauvegardés.<br>Vérifie ta connexion Airtel / Moov et réessaie.</p>'
-    + '<button class="btn" style="background:#fff;color:#0a6b5e;margin-top:12px" onclick="retryOnline()">🔄 Réessayer la connexion</button></div>';
+ return '<div class="offlineWrap">'
+ +'<svg viewBox="0 0 360 260"><g stroke="#2ee6a8" stroke-width="9" stroke-linecap="round" fill="none"><path d="M180 22 Q230 55 275 22"/><path d="M195 45 Q225 68 255 45"/></g><line x1="175" y1="10" x2="280" y2="95" stroke="#ff5c7a" stroke-width="9" stroke-linecap="round"/><circle cx="225" cy="98" r="9" fill="#2ee6a8"/><rect x="118" y="115" width="48" height="84" rx="10" fill="#fff"/><text x="142" y="148" font-size="9" text-anchor="middle" fill="#0f8a8a" font-weight="700">no signal</text><text x="142" y="176" font-size="10" text-anchor="middle" fill="#ff5c7a">📶✕</text><circle cx="215" cy="105" r="22" fill="#ffb88a"/><path d="M192 100 Q195 78 215 78 Q238 78 238 102 Q238 112 232 112 L198 112 Q192 110 192 100Z" fill="#2b1a12"/><circle cx="207" cy="104" r="3" fill="#111"/><circle cx="222" cy="104" r="3" fill="#111"/><path d="M208 114 Q215 119 222 114" stroke="#111" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M185 125 Q210 115 235 125 L250 190 L175 190 Z" fill="#12b5a5"/></svg>'
+ +'<div class="offlineBadge">OFFLINE</div><h2>Tu es hors-ligne 📶</h2><p>Pas de panique, tes derniers posts sont sauvegardés.</p><button class="btn" style="background:#fff;color:#0a6b5e" onclick="retryOnline()">🔄 Réessayer</button></div>';
 }
 function cachedHTML(){
-  var c=[]; try{ c=JSON.parse(localStorage.getItem('feedCache')||'[]')||[]; }catch(e){ c=[]; }
-  if(!c.length) return '<p class="card mut">Aucun post en cache. Connecte-toi une fois en ligne pour les sauvegarder.</p>';
-  return c.slice(0,10).map(function(p){ return '<div class="card"><b>'+E(p.anon?'Anonyme 👻':(p.name||'?'))+'</b><div class="mut">'+E(p.group||'')+'</div><p style="white-space:pre-wrap">'+E((p.text||'').slice(0,300))+'</p>'+(p.img&&p.img.indexOf('data:video')<0&&p.img.indexOf('application/pdf')<0?'<img src="'+p.img+'">':'')+'<p class="mut" style="font-size:12px">❤️ '+(p.likes||[]).length+' · 💬 '+(p.com||[]).length+' · Lecture seule hors-ligne</p></div>'; }).join('');
+ var c=[]; try{c=JSON.parse(localStorage.getItem('feedCache')||'[]')||[];}catch(e){c=[];}
+ if(!c.length) return '<p class="card mut">Aucun post en cache. Connecte-toi une fois en ligne.</p>';
+ return c.slice(0,10).map(function(p){return '<div class="card"><b>'+E(p.anon?'Anonyme 👻':(p.name||'?'))+'</b><div class="mut">'+E(p.group||'')+'</div><p style="white-space:pre-wrap">'+E((p.text||'').slice(0,300))+'</p>'+(p.img&&p.img.indexOf('data:video')<0&&p.img.indexOf('application/pdf')<0?'<img src="'+p.img+'">':'')+'<p class="mut" style="font-size:12px">Lecture seule hors-ligne</p></div>';}).join('');
 }
-async function retryOnline(){
-  if(!navigator.onLine){ alert('Toujours hors-ligne 📶'); return; }
-  isOffline=false; updateOffline(); render();
+async function retryOnline(){ if(!navigator.onLine) return alert('Toujours hors-ligne 📶'); isOffline=false; updateOffline(); render(); }
+window.addEventListener('online',function(){isOffline=false;updateOffline();render();});
+window.addEventListener('offline',function(){isOffline=true;updateOffline();render();});
+function show(html){document.getElementById('app').innerHTML='<div class="w">'+html+'</div>'+'<nav><button onclick="goView(\'home\')">🏡</button><button onclick="goView(\'search\')">🔎</button><button onclick="goView(\'new\')">✨</button><button onclick="goView(\'lib\')">📚</button><button onclick="goView(\'msgs\')">💬</button><button onclick="goView(\'me\')">😎</button></nav>';updateOffline();}
+function goView(v){view=v; render();}
+async function api(n,b){
+ if(!navigator.onLine){isOffline=true;updateOffline();return {e:'offline'};}
+ try{
+  var ctrl=new AbortController(); setTimeout(function(){ctrl.abort();},8000);
+  var r=await fetch('/api/'+n,{method:'POST',headers:{'Content-Type':'application/json','x-token':tok},body:JSON.stringify(b||{}),signal:ctrl.signal});
+  if(r.status===401){localStorage.removeItem('t');tok='';me=null;return {};}
+  isOffline=false;updateOffline();return await r.json();
+ }catch(e){isOffline=true;updateOffline();return {e:'offline'};}
 }
-window.addEventListener('online', function(){ isOffline=false; updateOffline(); render(); });
-window.addEventListener('offline', function(){ isOffline=true; updateOffline(); render(); });
-function show(html){ document.getElementById('app').innerHTML = '<div class="w">'+html+'</div>' + '<nav><button onclick="goView(\'home\')">🏡</button><button onclick="goView(\'search\')">🔎</button><button onclick="goView(\'new\')">✨</button><button onclick="goView(\'lib\')">📚</button><button onclick="goView(\'me\')">😎</button></nav>'; updateOffline(); }
-function goView(v){ view=v; render(); }
-async function api(n, b){
-  if(!navigator.onLine){ isOffline=true; updateOffline(); return {e:'offline'}; }
-  try{
-    var ctrl = new AbortController(); setTimeout(function(){ ctrl.abort(); }, 8000);
-    var r = await fetch('/api/'+n, {method:'POST', headers:{'Content-Type':'application/json','x-token':tok}, body: JSON.stringify(b||{}), signal: ctrl.signal});
-    if(r.status===401){ localStorage.removeItem('t'); tok=''; me=null; return {}; }
-    isOffline=false; updateOffline(); return await r.json();
-  }catch(e){ isOffline=true; updateOffline(); return {e:'offline'}; }
-}
-var CLASSES=['Général','Droit L1','Droit L2','Droit L3','Médecine L1','Médecine L2','Médecine L3','Biologie L1','Biologie L2','Biologie L3','Math-Physique L1','Math-Physique L2','Math-Physique L3','Mathématiques L1','Mathématiques L2','Mathématiques L3','Sciences Techniques L1','Sciences Techniques L2','Sciences Techniques L3','Physique-Chimie L1','Physique-Chimie L2','Physique-Chimie L3','Informatique L1','Informatique L2','Informatique L3','Économie L1','Économie L2','Économie L3','Lettres L1','Lettres L2','Lettres L3','Sciences L1','Sciences L2','Anglais L1','Anglais L2'];
+var CLASSES=['Général','Droit L1','Droit L2','Droit L3','Médecine L1','Médecine L2','Médecine L3','Biologie L1','Biologie L2','Biologie L3','Math-Physique L1','Math-Physique L2','Math-Physique L3','Mathématiques L1','Mathématiques L2','Mathématiques L3','Sciences Techniques L1','Sciences Techniques L2','Sciences Techniques L3','Physique-Chimie L1','Physique-Chimie L2','Physique-Chimie L3','Informatique L1','Informatique L2','Informatique L3','Économie L1','Économie L2','Économie L3','Lettres L1','Lettres L2','Lettres L3','Anglais L1','Anglais L2','INJS'];
 var BOOKS=[
 {t:'Anatomie humaine - OpenStax',a:'OpenStax',d:'Médecine',e:'🩺',u:'https://openstax.org/details/books/anatomy-and-physiology-2e',desc:'Anatomie et physiologie complète, gratuit.'},
 {t:'Biologie - OpenStax',a:'OpenStax',d:'Biologie',e:'🧬',u:'https://openstax.org/details/books/biology-2e',desc:'Biologie générale, cellules, génétique.'},
 {t:'Microbiologie',a:'OpenStax',d:'Biologie',e:'🦠',u:'https://openstax.org/details/books/microbiology',desc:'Bactéries, virus, immunologie.'},
-{t:'Chimie - OpenStax',a:'OpenStax',d:'Physique-Chimie',e:'🧪',u:'https://openstax.org/details/books/chemistry-2e',desc:'Chimie générale, organique.'},
-{t:'Physique universitaire',a:'OpenStax',d:'Physique-Chimie',e:'⚛️',u:'https://openstax.org/details/books/university-physics-volume-1',desc:'Mécanique, ondes, thermodynamique.'},
-{t:'Calcul / Mathématiques',a:'OpenStax',d:'Mathématiques',e:'📐',u:'https://openstax.org/details/books/calculus-volume-1',desc:'Analyse, dérivées, intégrales.'},
-{t:'Algèbre et Statistiques',a:'OpenStax',d:'Mathématiques',e:'🔢',u:'https://openstax.org/details/books/introductory-statistics',desc:'Statistiques, probabilités.'},
+{t:'Chimie - OpenStax',a:'OpenStax',d:'Physique-Chimie',e:'🧪',u:'https://openstax.org/details/books/chemistry-2e',desc:'Chimie générale.'},
+{t:'Physique universitaire',a:'OpenStax',d:'Physique-Chimie',e:'⚛️',u:'https://openstax.org/details/books/university-physics-volume-1',desc:'Mécanique, ondes.'},
+{t:'Calcul / Maths',a:'OpenStax',d:'Mathématiques',e:'📐',u:'https://openstax.org/details/books/calculus-volume-1',desc:'Analyse, dérivées, intégrales.'},
+{t:'Statistiques',a:'OpenStax',d:'Mathématiques',e:'🔢',u:'https://openstax.org/details/books/introductory-statistics',desc:'Statistiques, probabilités.'},
 {t:'Python - Programmation',a:'OpenStax',d:'Informatique',e:'🐍',u:'https://openstax.org/details/books/introduction-python-programming',desc:'Apprendre Python de zéro.'},
-{t:'Économie - Principes',a:'OpenStax',d:'Économie',e:'💰',u:'https://openstax.org/details/books/principles-economics-3e',desc:'Micro et macro-économie.'},
-{t:'Les Misérables',a:'Victor Hugo',d:'Lettres',e:'📖',u:'https://www.gutenberg.org/ebooks/135',desc:'Classique français, domaine public.'},
-{t:'Grammaire anglaise',a:'British Council',d:'Anglais',e:'🇬🇧',u:'https://learnenglish.britishcouncil.org/grammar',desc:'Grammaire, vocabulaire, exercices.'},
-{t:'Psychologie - Introduction',a:'OpenStax',d:'Général',e:'🧠',u:'https://openstax.org/details/books/psychology-2e',desc:'Psychologie générale.'}
+{t:'Économie - Principes',a:'OpenStax',d:'Économie',e:'💰',u:'https://openstax.org/details/books/principles-economics-3e',desc:'Micro et macro.'},
+{t:'Les Misérables',a:'Victor Hugo',d:'Lettres',e:'📖',u:'https://www.gutenberg.org/ebooks/135',desc:'Classique français.'},
+{t:'Grammaire anglaise',a:'British Council',d:'Anglais',e:'🇬🇧',u:'https://learnenglish.britishcouncil.org/grammar',desc:'Grammaire, vocabulaire.'},
+{t:'Psychologie',a:'OpenStax',d:'Général',e:'🧠',u:'https://openstax.org/details/books/psychology-2e',desc:'Psychologie générale.'}
 ];
 var DAILY=[{q:'Tu préfères réviser le matin ou le soir ?',opts:['🌅 Matin','🌙 Soir','😴 Jamais']},{q:'Cours le plus difficile ?',opts:['📐 Maths','⚖️ Droit','🧬 Bio','💻 Info']},{q:'Tu es plutôt ?',opts:['📚 Bosseur','🎉 Fêtard','😴 Dormeur','🤫 Discret']},{q:'Meilleur endroit pour réviser ?',opts:['🏠 Maison','📚 Bibliothèque','☕ Café','🌳 Dehors']},{q:'Ton plus gros stress ?',opts:['📝 Examens','💰 Argent','💔 Amour','😰 Tout']}];
-function dailyHTML(){
-  var day=new Date().getDate(); var p=DAILY[day%DAILY.length]; var key='daily_'+new Date().toDateString(); var voted=localStorage.getItem(key)||'';
-  return '<div class="card" style="background:linear-gradient(135deg,#2f6bff,#8a4dff);color:#fff"><b>📊 Sondage du jour</b><p>'+p.q+'</p>'+p.opts.map(function(o){ return '<button class="ghost" style="color:#fff;border-color:#fff8;width:100%;text-align:left;margin:3px 0" onclick="voteDaily(\''+o+'\')">'+o+(voted===o?' ✅ Ton vote':'')+'</button>'; }).join('')+'</div>';
-}
-function voteDaily(o){ localStorage.setItem('daily_'+new Date().toDateString(), o); render(); }
-function authHTML(){
-  return '<h1>Meeting University<br>of N\'djamena</h1><p class="mut">Le réseau des étudiants</p>'
-    + (isOffline?offlineHTML():'')
-    + '<div class="card"><select id="f"><option value="">Choisir ma filière (pour créer un compte)</option>'+CLASSES.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('')+'</select><input id="n" placeholder="Nom complet"><input id="p" type="password" placeholder="Mot de passe - ex: mon chat @ 2026 !"><p class="mut" style="font-size:12px">🔐 Espaces et @ # ! ? autorisés. Éviter 1234, 0000, password.</p><button class="btn" onclick="doLogin()">Se connecter</button><p class="mut" onclick="showReg()" style="cursor:pointer"><u>Créer un compte</u></p><p class="mut" onclick="doForgot()" style="cursor:pointer"><u>Mot de passe oublié</u></p></div>';
-}
-function showReg(){
-  show('<h1>Créer un compte</h1>'+(isOffline?offlineHTML():'')+'<div class="card"><select id="f">'+CLASSES.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('')+'</select><input id="n" placeholder="Nom complet"><input id="s" placeholder="Réponse secrète"><input id="p" type="password" placeholder="Mot de passe"><button class="btn" onclick="doReg()">Créer mon compte</button><p class="mut" onclick="render()" style="cursor:pointer"><u>J\'ai déjà un compte</u></p></div>');
-}
-async function doLogin(){
-  if(isOffline) return alert('Hors-ligne, impossible de se connecter 📶');
-  var n=document.getElementById('n').value; var p=document.getElementById('p').value;
-  if(!n||!p) return alert('Mets nom + mot de passe');
-  var r=await api('login',{name:n,pass:p}); if(r.e) return alert(r.e);
-  localStorage.setItem('t',r.t); tok=r.t; me=null; render();
-}
-async function doReg(){
-  var n=document.getElementById('n').value; var p=document.getElementById('p').value; var s=document.getElementById('s').value; var f=document.getElementById('f').value;
-  if(!n||!p||!s) return alert('Remplis tout');
-  var r=await api('reg',{name:n,pass:p,secret:s,filiere:f||'Général'}); if(r.e) return alert(r.e);
-  localStorage.setItem('t',r.t); tok=r.t; me=null; render();
-}
-async function doForgot(){
-  var n=prompt('Ton nom'); var s=prompt('Ta réponse secrète'); var p=prompt('Nouveau mot de passe');
-  if(!n||!s||!p) return;
-  var r=await fetch('/api/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,secret:s,pass:p})}).then(function(x){return x.json()});
-  alert(r.e||'Mot de passe changé');
-}
-function libHTML(){
-  var cats=['Tout','Médecine','Biologie','Mathématiques','Math-Physique','Physique-Chimie','Sciences Techniques','Informatique','Droit','Économie','Lettres','Anglais','Général'];
-  var list=BOOKS.filter(function(b){ return (libCat==='Tout'||b.d===libCat) && (!libQ||(b.t+b.a+b.d).toLowerCase().indexOf(libQ.toLowerCase())>=0); });
-  return '<h2>📚 Bibliothèque</h2>'+(isOffline?offlineHTML():'')+'<input placeholder="🔎 Chercher un livre…" value="'+E(libQ)+'" oninput="libQ=this.value;render()">'
-    + '<div class="chips">'+cats.map(function(c){ return '<button class="'+(libCat===c?'on':'')+'" onclick="libCat=\''+c+'\';render()">'+c+'</button>'; }).join('')+'</div>'
-    + list.map(function(b){ return '<div class="card row" style="align-items:flex-start"><div class="bookcover">'+b.e+'</div><div class="sp"><b>'+E(b.t)+'</b><div class="mut">'+E(b.a)+' · '+E(b.d)+'</div><p style="font-size:14px">'+E(b.desc)+'</p><a class="btn" href="'+b.u+'" target="_blank" style="text-decoration:none;padding:8px 14px;font-size:14px;display:inline-block;margin-top:8px">📖 Ouvrir le livre</a></div></div>'; }).join('')
-    + '<p class="mut card">💡 Astuce : en bibliothèque, les livres OpenStax sont 100% gratuits et légaux.</p>';
-}
+function dailyHTML(){var day=new Date().getDate();var p=DAILY[day%DAILY.length];var key='daily_'+new Date().toDateString();var voted=localStorage.getItem(key)||'';return '<div class="card" style="background:linear-gradient(135deg,#2f6bff,#8a4dff);color:#fff"><b>📊 Sondage du jour</b><p>'+p.q+'</p>'+p.opts.map(function(o){return '<button class="ghost" style="color:#fff;border-color:#fff8;width:100%;text-align:left;margin:3px 0" onclick="voteDaily(\''+o+'\')">'+o+(voted===o?' ✅':'')+'</button>';}).join('')+'</div>';}
+function voteDaily(o){localStorage.setItem('daily_'+new Date().toDateString(),o);render();}
+function authHTML(){return '<h1>Meeting University<br>of N\'djamena</h1><p class="mut">Le réseau des étudiants</p>'+(isOffline?offlineHTML():'')+'<div class="card"><select id="f"><option value="">Choisir ma filière</option>'+CLASSES.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('')+'</select><input id="n" placeholder="Nom complet"><input id="p" type="password" placeholder="Mot de passe - ex: mon chat @ 2026 !"><p class="mut" style="font-size:12px">🔐 Espaces et @ # ! ? autorisés. Éviter 1234, 0000, password.</p><button class="btn" onclick="doLogin()">Se connecter</button><p class="mut" onclick="showReg()" style="cursor:pointer"><u>Créer un compte</u></p><p class="mut" onclick="doForgot()" style="cursor:pointer"><u>Mot de passe oublié</u></p></div>';}
+function showReg(){show('<h1>Créer un compte</h1>'+(isOffline?offlineHTML():'')+'<div class="card"><select id="f">'+CLASSES.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('')+'</select><input id="n" placeholder="Nom complet"><input id="s" placeholder="Réponse secrète"><input id="p" type="password" placeholder="Mot de passe"><button class="btn" onclick="doReg()">Créer mon compte</button><p class="mut" onclick="render()" style="cursor:pointer"><u>J\'ai déjà un compte</u></p></div>');}
+async function doLogin(){if(isOffline) return alert('Hors-ligne 📶');var n=document.getElementById('n').value;var p=document.getElementById('p').value;if(!n||!p) return alert('Mets nom + mot de passe');var r=await api('login',{name:n,pass:p});if(r.e) return alert(r.e);localStorage.setItem('t',r.t);tok=r.t;me=null;render();}
+async function doReg(){var n=document.getElementById('n').value;var p=document.getElementById('p').value;var s=document.getElementById('s').value;var f=document.getElementById('f').value;if(!n||!p||!s) return alert('Remplis tout');var r=await api('reg',{name:n,pass:p,secret:s,filiere:f||'Général'});if(r.e) return alert(r.e);localStorage.setItem('t',r.t);tok=r.t;me=null;render();}
+async function doForgot(){var n=prompt('Ton nom');var s=prompt('Ta réponse secrète');var p=prompt('Nouveau mot de passe');if(!n||!s||!p) return;var r=await fetch('/api/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,secret:s,pass:p})}).then(function(x){return x.json()});alert(r.e||'Mot de passe changé');}
+function libHTML(){var cats=['Tout','Médecine','Biologie','Mathématiques','Math-Physique','Physique-Chimie','Sciences Techniques','Informatique','Droit','Économie','Lettres','Anglais','Général'];var list=BOOKS.filter(function(b){return (libCat==='Tout'||b.d===libCat)&&(!libQ||(b.t+b.a+b.d).toLowerCase().indexOf(libQ.toLowerCase())>=0);});return '<h2>📚 Bibliothèque</h2>'+(isOffline?offlineHTML():'')+'<input placeholder="🔎 Chercher un livre…" value="'+E(libQ)+'" oninput="libQ=this.value;render()">'+'<div class="chips">'+cats.map(function(c){return '<button class="'+(libCat===c?'on':'')+'" onclick="libCat=\''+c+'\';render()">'+c+'</button>';}).join('')+'</div>'+list.map(function(b){return '<div class="card row" style="align-items:flex-start"><div class="bookcover">'+b.e+'</div><div class="sp"><b>'+E(b.t)+'</b><div class="mut">'+E(b.a)+' · '+E(b.d)+'</div><p style="font-size:14px">'+E(b.desc)+'</p><a class="btn" href="'+b.u+'" target="_blank" style="text-decoration:none;padding:8px 14px;font-size:14px;display:inline-block;margin-top:8px">📖 Ouvrir le livre</a></div></div>';}).join('')+'<p class="mut card">💡 Livres OpenStax 100% gratuits et légaux.</p>';}
 async function render(){
-  try{
-    if(isOffline && !tok){ show(offlineHTML()+'<p class="mut card" style="text-align:center">Connecte-toi pour voir ton fil. Tes données reviennent dès que la connexion revient.</p>'); return; }
-    if(!tok){ show(authHTML()); return; }
-    if(!me){
-      me = await api('me');
-      if(!me || !me.id){
-        if(isOffline){ show(offlineHTML()+'<h2>Derniers posts en cache</h2>'+cachedHTML()); return; }
-        if(me && me.e==='offline'){ show('<div class="card" style="text-align:center"><h2>Serveur en réveil 😴</h2><p class="mut">Render gratuit met 30-60 sec à se réveiller.</p><button class="btn" onclick="me=null;render()">🔄 Réessayer</button></div>'); return; }
-        localStorage.removeItem('t'); tok=''; me=null; show(authHTML()); return;
-      }
-    }
-    if(view==='new'){
-      show('<h2>Publier</h2>'+(isOffline?offlineHTML():'')+'<div class="card"><select id="ty"><option value="post">Publication</option><option value="annonce">Annonce</option><option value="cours">Cours / PDF</option><option value="event">Événement</option><option value="question">❓ Question / Entraide</option><option value="meme">😂 Mème</option><option value="confession">👻 Confession anonyme</option><option value="vente">🛒 Marché - Vente</option></select><textarea id="tx" rows="4" placeholder="Écris ici..."></textarea><input id="price" placeholder="Prix en FCFA si vente (optionnel)"><input id="wa" placeholder="Ton WhatsApp si vente (ex: 23566000000)"><label class="row"><input type="checkbox" id="anon" style="width:auto"> 👻 Publier en anonyme</label><button class="btn" onclick="doPub()">Publier ➡️</button></div>');
-      return;
-    }
-    if(view==='lib'){ show(libHTML()); return; }
-    if(view==='search'){
-      show('<h2>🔍 Recherche</h2>'+(isOffline?offlineHTML():'')+'<input placeholder="Nom d\'un étudiant…" oninput="doSearch(this.value)"><div id="r"></div><button class="ghost" onclick="goView(\'home\')">← Accueil</button>');
-      return;
-    }
-    if(view==='me'){
-      var myPosts = await api('feed', {by: me.id});
-      var myPts = 0; try{ var lb = await api('leaderboard'); var found = (lb||[]).filter(function(x){return x.id===me.id;}); if(found.length) myPts=found[0].pts; }catch(e){}
-      show('<div class="card" style="text-align:center"><div class="av" style="width:84px;height:84px;font-size:34px;margin:auto">'+E(me.name[0])+'</div><h2>'+E(me.name)+'</h2><p class="mut">'+E(me.filiere||'')+' · 🏆 '+myPts+' pts</p><p>'+E(me.bio||'')+'</p><select onchange="changeFiliere(this.value)" style="max-width:320px;margin:auto"><option value="">Changer ma filière...</option>'+CLASSES.map(function(c){return '<option value="'+c+'" '+(c===me.filiere?'selected':'')+'>'+c+'</option>';}).join('')+'</select><div style="margin-top:10px"><button class="ghost" onclick="editBio()">Modifier bio</button> <button class="ghost" onclick="doLogout()">Déconnexion</button></div></div>'+(isOffline?offlineHTML():'')+'<h2>Mes publications ('+myPosts.length+')</h2>'+myPosts.map(postHTML).join(''));
-      return;
-    }
-    // HOME
-    if(isOffline){
-      show(offlineHTML()+'<h2>Derniers posts en cache</h2><p class="mut">Tu peux les relire, mais pas liker / commenter sans connexion.</p>'+cachedHTML());
-      return;
-    }
-    var posts = await api('feed', {});
-    var leaders = await api('leaderboard');
-    if(posts && posts.length) try{ localStorage.setItem('feedCache', JSON.stringify(posts)); }catch(e){}
-    var h = '<h2>Accueil</h2><p class="mut">Connecté : '+E(me.name)+' · '+E(me.filiere||'')+'</p>'+dailyHTML();
-    if(leaders && leaders.length){
-      h += '<div class="card"><b>🏆 Top Étudiants</b>'+leaders.slice(0,5).map(function(u,i){ return '<div class="row" style="margin:8px 0"><span>'+(i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1))+'</span><div class="av">'+E(u.name[0])+'</div><div class="sp"><b>'+E(u.name)+'</b><div class="mut">'+E(u.filiere)+'</div></div><b>'+u.pts+' pts</b></div>'; }).join('')+'</div>';
-    }
-    h += '<button class="btn" onclick="goView(\'new\')">✨ Publier quelque chose</button>';
-    h += '<div class="chips"><button class="on" onclick="goView(\'home\')">Tout</button><button onclick="goView(\'lib\')">📚 Bibliothèque</button></div>';
-    if(!posts.length) h += '<p class="card">Aucune publication. Sois le premier !</p>';
-    h += posts.map(postHTML).join('');
-    show(h);
-  }catch(e){
-    show('<div class="card" style="text-align:center"><h2>Petit bug, on recommence ?</h2><p class="mut">'+E(e.message)+'</p><button class="btn" onclick="me=null;render()">🔄 Réessayer</button></div>');
+ try{
+  if(isOffline && !tok){show(offlineHTML()+'<p class="mut card" style="text-align:center">Connecte-toi pour voir ton fil.</p>');return;}
+  if(!tok){show(authHTML());return;}
+  if(!me){me=await api('me');if(!me||!me.id){if(isOffline){show(offlineHTML()+'<h2>Derniers posts en cache</h2>'+cachedHTML());return;}if(me&&me.e==='offline'){show('<div class="card" style="text-align:center"><h2>Serveur en réveil 😴</h2><p class="mut">Render gratuit met 30-60 sec à se réveiller.</p><button class="btn" onclick="me=null;render()">🔄 Réessayer</button></div>');return;}localStorage.removeItem('t');tok='';me=null;show(authHTML());return;}}
+  if(view==='new'){show('<h2>Publier</h2>'+(isOffline?offlineHTML():'')+'<div class="card"><select id="ty"><option value="post">Publication</option><option value="annonce">Annonce</option><option value="cours">Cours / PDF</option><option value="event">Événement</option><option value="question">❓ Question / Entraide</option><option value="meme">😂 Mème</option><option value="confession">👻 Confession anonyme</option><option value="vente">🛒 Marché - Vente</option></select><textarea id="tx" rows="4" placeholder="Écris ici..."></textarea><input id="price" placeholder="Prix en FCFA si vente"><input id="wa" placeholder="WhatsApp si vente (ex: 23566000000)"><label class="row"><input type="checkbox" id="anon" style="width:auto"> 👻 Publier en anonyme</label><button class="btn" onclick="doPub()">Publier ➡️</button></div>');return;}
+  if(view==='lib'){show(libHTML());return;}
+  if(view==='search'){show('<h2>🔍 Recherche</h2>'+(isOffline?offlineHTML():'')+'<input placeholder="Nom d\'un étudiant…" oninput="doSearch(this.value)"><div id="r"></div><button class="ghost" onclick="goView(\'home\')">← Accueil</button>');return;}
+  if(view==='msgs'){await renderMsgs();return;}
+  if(view==='me'){var myPosts=await api('feed',{by:me.id});var myPts=0;try{var lb=await api('leaderboard');var f=(lb||[]).filter(function(x){return x.id===me.id;});if(f.length) myPts=f[0].pts;}catch(e){}show('<div class="card" style="text-align:center"><div class="av" style="width:84px;height:84px;font-size:34px;margin:auto">'+E(me.name[0])+'</div><h2>'+E(me.name)+'</h2><p class="mut">'+E(me.filiere||'')+' · 🏆 '+myPts+' pts</p><p>'+E(me.bio||'')+'</p><select onchange="changeFiliere(this.value)" style="max-width:320px;margin:auto"><option value="">Changer ma filière...</option>'+CLASSES.map(function(c){return '<option value="'+c+'" '+(c===me.filiere?'selected':'')+'>'+c+'</option>';}).join('')+'</select><div style="margin-top:10px"><button class="ghost" onclick="editBio()">Modifier bio</button> <button class="ghost" onclick="doLogout()">Déconnexion</button></div></div>'+(isOffline?offlineHTML():'')+'<h2>Mes publications ('+myPosts.length+')</h2>'+myPosts.map(postHTML).join(''));return;}
+  if(isOffline){show(offlineHTML()+'<h2>Derniers posts en cache</h2><p class="mut">Lecture seule, pas de like sans connexion.</p>'+cachedHTML());return;}
+  // OUVERTURE RAPIDE : affiche le cache d'abord
+  var cached=[]; try{cached=JSON.parse(localStorage.getItem('feedCache')||'[]')||[];}catch(e){cached=[];}
+  if(cached.length && !window._loadedOnce){
+    var h0='<h2>Accueil</h2><p class="mut">Connecté : '+E(me.name)+' · '+E(me.filiere||'')+' · <span style="color:#ff8c00">⚡ Chargement rapide...</span></p>'+dailyHTML()+'<button class="btn" onclick="goView(\'new\')">✨ Publier quelque chose</button>'+cached.map(postHTML).join('');
+    show(h0); window._loadedOnce=true;
+    setTimeout(function(){window._loadedOnce=false;render();},800);
+    return;
   }
+  window._loadedOnce=false;
+  var posts=await api('feed',{});
+  var leaders=await api('leaderboard');
+  if(posts&&posts.length) try{localStorage.setItem('feedCache',JSON.stringify(posts));}catch(e){}
+  var h='<h2>Accueil</h2><p class="mut">Connecté : '+E(me.name)+' · '+E(me.filiere||'')+'</p>'+dailyHTML();
+  if(leaders&&leaders.length){h+='<div class="card"><b>🏆 Top Étudiants</b>'+leaders.slice(0,5).map(function(u,i){return '<div class="row" style="margin:8px 0"><span>'+(i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1))+'</span><div class="av">'+E(u.name[0])+'</div><div class="sp"><b>'+E(u.name)+'</b><div class="mut">'+E(u.filiere)+'</div></div><b>'+u.pts+' pts</b></div>';}).join('')+'</div>';}
+  h+='<button class="btn" onclick="goView(\'new\')">✨ Publier quelque chose</button><div class="chips"><button class="on" onclick="goView(\'home\')">Tout</button><button onclick="goView(\'lib\')">📚 Bibliothèque</button></div>';
+  if(!posts.length) h+='<p class="card">Aucune publication. Sois le premier !</p>';
+  h+=posts.map(postHTML).join('');
+  show(h);
+ }catch(e){show('<div class="card" style="text-align:center"><h2>Petit bug, on recommence ?</h2><p class="mut">'+E(e.message)+'</p><button class="btn" onclick="me=null;render()">🔄 Réessayer</button></div>');}
 }
 function postHTML(p){
-  var likes=(p.likes||[]).length; var liked=(p.likes||[]).indexOf(me.id)>=0;
-  var isVente = p.type==='vente';
-  return '<div class="card"><div class="row"><div class="av">'+E((p.anon?'?':(p.name||'?'))[0])+'</div><div><b>'+E(p.anon?'Anonyme 👻':p.name)+'</b><div class="mut">'+E(p.group||'')+'</div></div><span class="sp"></span>'+(p.by===me.id?'<button class="ghost" onclick="doDel(\''+p.id+'\')">🗑️</button>':'')+'</div>'
-    + '<p style="white-space:pre-wrap">'+E(p.text)+'</p>'
-    + (p.img?'<img src="'+p.img+'">':'')
-    + (isVente && p.price?'<p><b style="background:#00c853;color:#fff;padding:4px 10px;border-radius:10px">'+E(p.price)+' FCFA</b></p>':'')
-    + (isVente && p.wa?'<a class="btn" href="https://wa.me/'+E(String(p.wa).replace(/[^0-9]/g,''))+'" target="_blank" style="text-decoration:none;padding:8px 14px;font-size:14px;display:inline-block">💬 WhatsApp</a>':'')
-    + '<div class="row"><button class="ghost" onclick="doLike(\''+p.id+'\')">'+(liked?'❤️ ':'🤍 ')+likes+'</button><button class="ghost" onclick="doComment(\''+p.id+'\')">💬 '+(p.com||[]).length+'</button><span class="sp"></span><button class="ghost" onclick="doReport(\''+p.id+'\')">🚩</button></div>'
-    + (p.com||[]).map(function(c){ return '<p style="font-size:14px"><b>'+E(c.name)+'</b> : '+E(c.text)+'</p>'; }).join('')
-    + '</div>';
+ var likes=(p.likes||[]).length;var liked=(p.likes||[]).indexOf(me.id)>=0;var isVente=p.type==='vente';
+ return '<div class="card post"><div class="row"><div class="av">'+E((p.anon?'?':(p.name||'?'))[0])+'</div><div><b>'+E(p.anon?'Anonyme 👻':p.name)+'</b><div class="mut">'+E(p.group||'')+'</div></div><span class="sp"></span>'+(p.by===me.id?'<button class="ghost" onclick="doDel(\''+p.id+'\')">🗑️</button>':'')+'</div><p style="white-space:pre-wrap">'+E(p.text)+'</p>'+(p.img?'<img src="'+p.img+'">':'')+(isVente&&p.price?'<p><b style="background:#00c853;color:#fff;padding:4px 10px;border-radius:10px">'+E(p.price)+' FCFA</b></p>':'')+(isVente&&p.wa?'<a class="btn" href="https://wa.me/'+E(String(p.wa).replace(/[^0-9]/g,''))+'" target="_blank" style="text-decoration:none;padding:8px 14px;font-size:14px;display:inline-block">💬 WhatsApp</a>':'')+'<div class="row"><button class="ghost" onclick="doLike(\''+p.id+'\')">'+(liked?'❤️ ':'🤍 ')+likes+'</button><button class="ghost" onclick="doComment(\''+p.id+'\')">💬 '+(p.com||[]).length+'</button><span class="sp"></span><button class="ghost" onclick="doReport(\''+p.id+'\')">🚩</button></div>'+(p.com||[]).map(function(c){return '<p style="font-size:14px"><b>'+E(c.name)+'</b> : '+E(c.text)+'</p>';}).join('')+'</div>';
 }
-async function doPub(){
-  if(isOffline) return alert('Hors-ligne : impossible de publier 📶');
-  var t=document.getElementById('tx').value; if(!t) return alert('Écris quelque chose');
-  var r=await api('post',{type:document.getElementById('ty').value, text:t, group:me.filiere||'Général', price:document.getElementById('price').value, wa:document.getElementById('wa').value, anon:document.getElementById('anon').checked});
-  if(r.e) return alert(r.e);
-  view='home'; render();
+async function doPub(){if(isOffline) return alert('Hors-ligne 📶');var t=document.getElementById('tx').value;if(!t) return alert('Écris quelque chose');var r=await api('post',{type:document.getElementById('ty').value,text:t,group:me.filiere||'Général',price:document.getElementById('price').value,wa:document.getElementById('wa').value,anon:document.getElementById('anon').checked});if(r.e) return alert(r.e);view='home';render();}
+async function doLike(id){if(isOffline) return alert('Hors-ligne 📶');await api('like',{id:id});render();}
+async function doComment(id){if(isOffline) return alert('Hors-ligne 📶');var t=prompt('Ton commentaire');if(!t) return;await api('comment',{id:id,text:t});render();}
+async function doDel(id){if(!confirm('Supprimer ?')) return;await api('delpost',{id:id});render();}
+async function doReport(id){var t=prompt('Pourquoi signaler ? (3 signalements = masqué)');if(t){var r=await api('report',{target:id,why:t});alert(r.count>=3?'Post masqué après 3 signalements 🛡️':'Signalement envoyé - '+r.count+'/3');}}
+async function changeFiliere(v){if(!v) return;await api('bio',{bio:me.bio||'',filiere:v});me=null;alert('Filière changée : '+v);render();}
+async function editBio(){var b=prompt('Ta bio',me.bio||'');if(b===null) return;await api('bio',{bio:b,filiere:me.filiere});me=null;render();}
+async function doSearch(q){var el=document.getElementById('r');if(!el) return;if(!q){el.innerHTML='';return;}var u=await api('users',{q:q});el.innerHTML=(u||[]).map(function(x){return '<div class="card row"><div class="av">'+E(x.name[0])+'</div><div class="sp"><b>'+E(x.name)+'</b><div class="mut">'+E(x.filiere)+'</div></div><button class="ghost" onclick="openChat(\''+x.id+'\',\''+E(x.name).replace(/\'/g,'')+'\')">💬 Discuter</button></div>';}).join('')||'<p class="mut">Aucun résultat</p>';}
+function doLogout(){localStorage.removeItem('t');tok='';me=null;view='home';render();}
+// ===== MESSAGERIE + APPELS VOCAL / VIDEO =====
+async function renderMsgs(){
+ if(!chatWith){
+  var users=await api('users',{q:''});
+  var h='<h2>💬 Messagerie</h2><p class="mut">Choisis un étudiant pour discuter, appeler en vocal ou vidéo.</p>';
+  if(isOffline) h+=offlineHTML();
+  h+='<input placeholder="🔎 Chercher..." oninput="doSearchMsg(this.value)"><div id="msgList">'+(users||[]).filter(function(u){return u.id!==me.id;}).map(userRow).join('')+'</div>';
+  show(h); return;
+ }
+ var msgs=await api('msgs',{with:chatWith});
+ var h2='<div class="row"><button class="ghost" onclick="chatWith=null;render()">←</button><div class="av">'+E(chatName[0]||'?')+'</div><b>'+E(chatName)+'</b><span class="sp"></span><button class="ghost" onclick="startCall(\'audio\')">📞 Vocal</button><button class="ghost" onclick="startCall(\'video\')">📹 Vidéo</button></div>';
+ h2+='<div id="chatBox" style="background:#fff;border-radius:16px;padding:10px;min-height:260px;max-height:420px;overflow-y:auto">'+(msgs||[]).map(function(m){var mine=m.from===me.id;return '<div style="display:flex"><div class="msg '+(mine?'meMsg':'otherMsg')+'">'+E(m.text)+'<div style="font-size:11px;opacity:.7">'+E(m.time||'')+'</div></div></div>';}).join('')||'<p class="mut">Aucun message. Dis bonjour ! 👋</p></div>';
+ h2+='<div class="row" style="margin-top:10px"><input id="msgInput" placeholder="Écris ton message..." style="flex:1"><button class="btn" style="width:auto;padding:12px 20px" onclick="sendMsg()">➤</button></div><button class="ghost" onclick="setTimeout(refreshChat,1000)">🔄 Actualiser</button>';
+ show(h2);
+ var box=document.getElementById('chatBox'); if(box) box.scrollTop=box.scrollHeight;
 }
-async function doLike(id){ if(isOffline) return alert('Hors-ligne 📶'); await api('like',{id:id}); render(); }
-async function doComment(id){ if(isOffline) return alert('Hors-ligne 📶'); var t=prompt('Ton commentaire'); if(!t) return; await api('comment',{id:id,text:t}); render(); }
-async function doDel(id){ if(!confirm('Supprimer ?')) return; await api('delpost',{id:id}); render(); }
-async function doReport(id){ var t=prompt('Pourquoi signaler ? (3 signalements = post masqué)'); if(t){ var r=await api('report',{target:id,why:t}); alert(r.count>=3?'Post masqué après 3 signalements 🛡️':'Signalement envoyé - '+r.count+'/3'); } }
-async function changeFiliere(v){ if(!v) return; await api('bio',{bio:me.bio||'',filiere:v}); me=null; alert('Filière changée : '+v); render(); }
-async function editBio(){ var b=prompt('Ta bio', me.bio||''); if(b===null) return; await api('bio',{bio:b,filiere:me.filiere}); me=null; render(); }
-async function doSearch(q){
-  var el=document.getElementById('r'); if(!el) return; if(!q){ el.innerHTML=''; return; }
-  var u=await api('users',{q:q});
-  el.innerHTML=(u||[]).map(function(x){ return '<div class="card row"><div class="av">'+E(x.name[0])+'</div><div><b>'+E(x.name)+'</b><div class="mut">'+E(x.filiere)+'</div></div></div>'; }).join('')||'<p class="mut">Aucun résultat</p>';
+function userRow(u){return '<div class="card row"><div class="av">'+E(u.name[0])+'</div><div class="sp"><b>'+E(u.name)+'</b><div class="mut">'+E(u.filiere||'')+'</div></div><button class="ghost" onclick="openChat(\''+u.id+'\',\''+E(u.name).replace(/\'/g,'')+'\')">💬</button></div>';}
+async function doSearchMsg(q){var el=document.getElementById('msgList');if(!el) return;var u=await api('users',{q:q});el.innerHTML=(u||[]).filter(function(x){return x.id!==me.id;}).map(userRow).join('');}
+function openChat(id,name){chatWith=id;chatName=name;view='msgs';render();}
+async function sendMsg(){var inp=document.getElementById('msgInput');var t=inp.value.trim();if(!t) return;inp.value='';var r=await api('sendmsg',{to:chatWith,text:t});if(r.e) return alert(r.e);render();}
+async function refreshChat(){render();}
+async function startCall(kind){
+ if(isOffline) return alert('Appel impossible hors-ligne 📶');
+ if(!confirm('Appeler '+chatName+' en '+(kind==='video'?'vidéo 📹':'vocal 📞')+' ? L\'autre doit accepter et ouvrir la messagerie.')) return;
+ try{
+  localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:kind==='video'});
+ }catch(e){return alert('Autorise micro / caméra dans Chrome pour appeler.');}
+ showCallUI(kind,chatName);
+ var lv=document.getElementById('localV'); if(lv) lv.srcObject=localStream;
+ // Envoie signal d'appel via serveur
+ await api('call_signal',{to:chatWith,type:'offer',kind:kind,fromName:me.name});
+ // Vérifie réponse toutes les 2 sec
+ var tries=0;
+ callTimer=setInterval(async function(){
+  tries++; if(tries>30){clearInterval(callTimer);return;}
+  var s=await api('call_poll',{with:chatWith});
+  if(s&&s.type==='accept'){
+   clearInterval(callTimer);
+   var st=document.getElementById('callStatus'); if(st) st.textContent='✅ '+chatName+' a accepté — Parlez !';
+  }
+  if(s&&s.type==='decline'){clearInterval(callTimer);endCall();alert(chatName+' a refusé l\'appel.');}
+ },2000);
+ // Accepte aussi les appels entrants
+ checkIncomingCall();
 }
-function doLogout(){ localStorage.removeItem('t'); tok=''; me=null; view='home'; render(); }
-updateOffline();
-render();
+async function checkIncomingCall(){
+ var s=await api('call_poll',{with:me.id});
+ if(s&&s.type==='offer'){
+  if(confirm('📞 Appel '+ (s.kind==='video'?'vidéo':'vocal') +' de '+E(s.fromName)+' — Accepter ?')){
+   await api('call_signal',{to:s.from, type:'accept', kind:s.kind});
+   var kind=s.kind;
+   try{ localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:kind==='video'});}catch(e){return alert('Autorise micro/caméra');}
+   chatWith=s.from; chatName=s.fromName; showCallUI(kind,s.fromName);
+   var lv=document.getElementById('localV'); if(lv) lv.srcObject=localStream;
+   var st=document.getElementById('callStatus'); if(st) st.textContent='✅ Appel en cours avec '+s.fromName;
+  } else { await api('call_signal',{to:s.from, type:'decline'}); }
+ }
+}
+function showCallUI(kind,name){
+ var html='<div class="callBox"><div style="padding:14px;text-align:center"><b>'+(kind==='video'?'📹 Appel vidéo':'📞 Appel vocal')+'</b><div>'+E(name)+'</div><div id="callStatus" style="font-size:13px;opacity:.8;margin-top:4px">📡 Appel en cours... En attente de '+E(name)+'</div></div>';
+ if(kind==='video'){ html+='<video id="localV" autoplay playsinline muted></video><video id="remoteV" autoplay playsinline style="position:absolute;right:12px;top:110px;width:120px;height:160px;border-radius:14px;border:2px solid #fff"></video>'; }
+ else { html+='<div style="flex:1;display:grid;place-items:center;font-size:80px">🎙️</div>'; }
+ html+='<div style="display:flex;gap:14px;justify-content:center;padding:18px"><button class="callBtn" style="background:#333;color:#fff" onclick="toggleMute()">🎤</button><button class="callBtn" style="background:#e53935;color:#fff" onclick="endCall()">📴</button>'+(kind==='video'?'<button class="callBtn" style="background:#333;color:#fff" onclick="toggleCam()">📹</button>':'')+'</div></div>';
+ document.body.insertAdjacentHTML('beforeend',html);
+}
+var muted=false, camOff=false;
+function toggleMute(){muted=!muted;if(localStream) localStream.getAudioTracks().forEach(function(t){t.enabled=!muted;});alert(muted?'Micro coupé 🔇':'Micro activé 🎤');}
+function toggleCam(){camOff=!camOff;if(localStream) localStream.getVideoTracks().forEach(function(t){t.enabled=!camOff;});}
+function endCall(){if(callTimer) clearInterval(callTimer);if(localStream) localStream.getTracks().forEach(function(t){t.stop();});localStream=null;var b=document.querySelector('.callBox');if(b) b.remove();render();}
+setInterval(function(){if(tok&&view==='msgs'&&!chatWith&&!document.querySelector('.callBox')) checkIncomingCall();},5000);
+updateOffline(); render();
 </script>
 </body>
 </html>
