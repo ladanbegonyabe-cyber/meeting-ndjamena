@@ -19,11 +19,8 @@ const UB = new Map(), UN = new Map(), PM = new Map(), CM = new Map(), UK = new M
 const pk = (a, b) => a < b ? a + '|' + b : b + '|' + a;
 function addMsg(m) { const k = pk(m.from, m.to); if (!CM.has(k)) CM.set(k, []); CM.get(k).push(m); for (const x of [m.from, m.to]) { if (!UK.has(x)) UK.set(x, new Set()); UK.get(x).add(k) } }
 function reindex() { UB.clear(); UN.clear(); PM.clear(); CM.clear(); UK.clear(); D.users.forEach(u => { UB.set(u.id, u); UN.set(u.name.toLowerCase(), u) }); D.posts.forEach(p => PM.set(p.id, p)); D.msgs.forEach(addMsg); if(!D.notifs) D.notifs=[]; if(!D.reports) D.reports=[]; }
-
-// ===== APPELS VOCAL / VIDEO - STOCKAGE EN MEMOIRE (ne pas sauvegarder en DB) =====
 let CALLS = {};
 function cleanCalls(){ const now=Date.now(); for(let k in CALLS){ if(now-CALLS[k].created>90000 && CALLS[k].status==='ringing') delete CALLS[k]; if(now-CALLS[k].created>3600000) delete CALLS[k]; } }
-
 async function load() { if (pool) { await pool.query('CREATE TABLE IF NOT EXISTS kv(k text PRIMARY KEY, v text NOT NULL)'); const r = await pool.query('SELECT k,v FROM kv'); for (const row of r.rows) if (COLS.includes(row.k)) D[row.k] = JSON.parse(row.v); } if(!D.notifs) D.notifs=[]; if(!D.reports) D.reports=[]; reindex(); }
 const save = () => { dirty = true; if (!timer) timer = setTimeout(flush, 2500) };
 async function flush() { timer = null; if (!dirty || busy) return; dirty = false; busy = true; try { const now = Date.now(); for (const t in D.tok) if (D.tok[t].exp < now) delete D.tok[t]; if (pool) { for (const k of COLS) await pool.query('INSERT INTO kv(k,v) VALUES($1,$2) ON CONFLICT (k) DO UPDATE SET v=$2', [k, JSON.stringify(D[k])]); } } catch (e) { dirty = true } busy = false; if (dirty && !timer) timer = setTimeout(flush, 2500) }
@@ -42,7 +39,7 @@ const P = {
   me: u => ({ ...pub(u), following: u.following, saved: u.saved, blocked: u.blocked }),
   users: (u, b) => { const q = (b.q || '').toLowerCase(); return D.users.filter(x => x.id !== u.id && (!q || x.name.toLowerCase().includes(q))).slice(0, 30).map(pub) },
   user: (u, b) => UB.get(b.id) ? pub(UB.get(b.id)) : { e: 'Introuvable' },
-  feed: (u, b) => { let posts = [...D.posts].filter(p=>hiddenCount(p.id)<3); if (b.type) posts = posts.filter(p => p.type === b.type); if (b.group) posts = posts.filter(p => p.group === b.group); if (b.by) posts = posts.filter(p => p.by === b.by); if (b.saved) posts = posts.filter(p => (u.saved || []).includes(p.id)); if (b.explore) posts = posts.sort((a,b)=> (b.likes||[]).length - (a.likes||[]).length); return posts.slice(-60).reverse().map(p => ({ ...p, name: p.anon?'Anonyme 👻':nm(p.by), photo: p.anon?'':(UB.get(p.by)||{}).photo||'', com: p.com || [] })); },
+  feed: (u, b) => { let posts = [...D.posts].filter(p=>hiddenCount(p.id)<3); if (b.type) posts = posts.filter(p => p.type === b.type); if (b.group) posts = posts.filter(p => p.group === b.group); if (b.by) posts = posts.filter(p => p.by === b.by); if (b.saved) posts = posts.filter(p => (u.saved || []).includes(p.id)); if (b.explore) posts = posts.sort((a,b)=> (b.likes||[]).length - (a.likes||[]).length); return posts.slice(-20).reverse().map(p => ({ ...p, name: p.anon?'Anonyme 👻':nm(p.by), photo: p.anon?'':(UB.get(p.by)||{}).photo||'', com: p.com || [] })); },
   explore: (u, b) => { let posts=[...D.posts].filter(p=>hiddenCount(p.id)<3).sort((a,b)=> ((b.likes||[]).length*2 + (b.com||[]).length) - ((a.likes||[]).length*2 + (a.com||[]).length)); if(b.type) posts=posts.filter(p=>p.type===b.type); return posts.slice(0,30).map(p=>({...p, name:p.anon?'Anonyme 👻':nm(p.by), photo:p.anon?'':(UB.get(p.by)||{}).photo||'', com:p.com||[]})); },
   fiches: (u, b) => { let posts=[...D.posts].filter(p=>p.type==='cours' && hiddenCount(p.id)<3); return posts.slice(-30).reverse().map(p=>({...p, name:p.anon?'Anonyme':nm(p.by), photo:(UB.get(p.by)||{}).photo||'', com:p.com||[]})); },
   leaderboard: (u) => { const scores={}; D.users.forEach(x=>scores[x.id]={id:x.id,name:x.name,photo:x.photo||'',filiere:x.filiere,pts:0,posts:0}); D.posts.forEach(p=>{ if(scores[p.by]){ scores[p.by].posts++; scores[p.by].pts+=10; scores[p.by].pts+=(p.likes||[]).length*2; scores[p.by].pts+=(p.com||[]).length*3; } }); return Object.values(scores).sort((a,b)=>b.pts-a.pts).slice(0,10); },
@@ -69,8 +66,6 @@ const P = {
   photo: (u, b) => { u.photo = String(b.img||'').slice(0, 500000); save(); return { ok: 1 } },
   poll: () => ({ un: 0, sig: 0, last: null }),
   logout: (u, b, h) => { const tk = h['x-token']; if (tk) delete D.tok[sha(tk)]; save(); return { ok: 1 } },
-
-  // ===== APPELS VOCAL / VIDEO - DEBUT =====
   call_start: (u, b) => {
     cleanCalls();
     const callId = Date.now()+''+Math.random().toString(36).slice(2);
@@ -106,7 +101,6 @@ const P = {
     }
     return { ok:1 };
   },
-  // ===== APPELS VOCAL / VIDEO - FIN =====
 };
 function getHTML(){ try { return fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8'); } catch(e){ return '<h1>public/index.html introuvable</h1>'; } }
 const srv = http.createServer((q, r) => {
