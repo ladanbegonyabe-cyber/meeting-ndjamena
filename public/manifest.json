@@ -1,12 +1,18 @@
 {
   "name": "Meeting University of N'djamena",
   "short_name": "Meeting UN",
+  "description": "Le réseau social des étudiants de l'Université de N'Djamena : publications, photos, vidéos et messages privés.",
+  "id": "/",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#1d4ed8",
-  "theme_color": "#1d4ed8",
+  "orientation": "portrait",
+  "lang": "fr",
+  "background_color": "#0ea5e9",
+  "theme_color": "#0ea5e9",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
