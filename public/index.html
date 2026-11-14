@@ -113,7 +113,7 @@ window.onerror=function(m){try{var t=document.getElementById('toast');t.textCont
 var reg=false;
 const $=s=>document.querySelector(s);
 const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let tok=localStorage.t||'',me=null,view='home',F={type:'',group:'',saved:0},cur=null,un=0,eco=localStorage.eco!=='0',ptimer=null,pun=-1,rec=null,chunks=[],feedLimit=10,feedCache=[],storiesCache=[],libCat='Tout',libQ='',libTab='livres',notifCount=0,exploreType='',expandedCm={},leaderboardCache=[],dailyVote=localStorage.dailyVote||'';
+let tok=localStorage.t||'',me=null,view='home',F={type:'',group:'',saved:0},cur=null,un=0,eco=localStorage.eco!=='0',ptimer=null,pun=-1,rec=null,chunks=[],feedLimit=5,feedCache=[],storiesCache=[],libCat='Tout',libQ='',libTab='livres',notifCount=0,exploreType='',expandedCm={},leaderboardCache=[],dailyVote=localStorage.dailyVote||'';
 const api=async(n,b={})=>{try{const r=await fetch('/api/'+n,{method:'POST',headers:{'Content-Type':'application/json','x-token':tok},body:JSON.stringify(b)});if(r.status===401){localStorage.t=tok='';me=null;return{}}return await r.json()}catch(e){toast('Serveur en réveil, réessaie dans 30 sec');return{e:'Serveur en réveil'}}};
 const toast=m=>{const t=$('#toast');if(!t)return;t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2500)};
 const ago=t=>{const m=(Date.now()-t)/6e4|0;return m<1?"à l'instant":m<60?m+' min':m<1440?(m/60|0)+' h':(m/1440|0)+' j'};
@@ -161,11 +161,11 @@ function go(v,c){view=v;cur=c||null;if(v==='notifs'){api('notif_read').then(()=>
 window.addEventListener('popstate',e=>{if(e.state){view=e.state.view||'home';cur=e.state.cur||null;render()}});
 function skeleton(){return `<div class="card"><div class="skel" style="height:44px;width:44px;border-radius:50%"></div><div class="skel" style="height:16px;margin-top:12px"></div><div class="skel" style="height:140px;margin-top:10px"></div></div>`}
 async function loadNotifs(){try{const r=await api('notifs');if(r&&r.un!==undefined) notifCount=r.un; const b=document.getElementById('bellBtn'); if(b) b.innerHTML=`🔔${notifCount?`<i>${notifCount}</i>`:''}`}catch(e){}}
-async function render(){try{if(!tok){$('#app').innerHTML=authHTML();return}if(!me){me=await api('me');if(!me||!me.id){tok='';localStorage.t='';me=null;$('#app').innerHTML=authHTML();return}}let h='';if(view==='home'){h=await home()}else if(view==='search'){h=searchV()}else if(view==='new'){h=newV()}else if(view==='lib'){h=libView()}else if(view==='explore'){h=await exploreV()}else if(view==='notifs'){h=await notifsView()}else if(view==='msg'){h=cur?await convo():await chats()}else{h=await prof(cur||me.id)} $('#app').innerHTML=`<div class="w">${h}</div>`+nav();if(view==='msg'&&cur){const m=$('#ml');if(m)m.scrollTop=1e9}clearInterval(ptimer);ptimer=setInterval(tick,10000);loadNotifs();loadFiches();}catch(e){console.error(e);$('#app').innerHTML=authHTML()}}
+async function render(){try{if(!tok){$('#app').innerHTML=authHTML();return}if(!me){me=await api('me');if(!me||!me.id){tok='';localStorage.t='';me=null;$('#app').innerHTML=authHTML();return}}let h='';if(view==='home'){h=await home()}else if(view==='search'){h=searchV()}else if(view==='new'){h=newV()}else if(view==='lib'){h=libView()}else if(view==='explore'){h=await exploreV()}else if(view==='notifs'){h=await notifsView()}else if(view==='msg'){h=cur?await convo():await chats()}else{h=await prof(cur||me.id)} $('#app').innerHTML=`<div class="w">${h}</div>`+nav();if(view==='msg'&&cur){const m=$('#ml');if(m)m.scrollTop=1e9}clearInterval(ptimer);ptimer=setInterval(tick,30000);loadNotifs();loadFiches();}catch(e){console.error(e);$('#app').innerHTML=authHTML()}}
 function authHTML(){return `<div class="w"><div class="topbar"><h1 style="margin-top:30px;font-size:30px">Meeting University<br>of N'djamena</h1><button class="ghost" onclick="toggleTheme()">🌙</button></div><p class="mut">Le réseau des étudiants</p><div class="card"><select id="f" style="margin:5px 0"><option value="">Choisir ma filière (pour créer un compte)</option>${CLASSES.map(c=>`<option value="${c}">${c}</option>`).join('')}</select>${reg?'':''}<input id="n" placeholder="Nom complet">${reg?'<input id="s" placeholder="Réponse secrète">':''}<input id="p" type="password" placeholder="Mot de passe"><button class="btn" style="width:100%;margin-top:8px" onclick="auth()">${reg?'Créer mon compte':'Se connecter'}</button><p class="mut" style="margin-top:12px" onclick="reg=!reg;render()"><u>${reg?'J\'ai déjà un compte':'Créer un compte'}</u></p>${reg?'':'<p class="mut" style="margin-top:8px" onclick="forgot()"><u>Mot de passe oublié</u></p>'}</div></div>`}
 async function auth(){toast('Un instant…');const r=await api(reg?'reg':'login',{name:$('#n').value,pass:$('#p').value,filiere:$('#f')?.value,secret:$('#s')?.value});if(r.e)return toast(r.e);localStorage.t=tok=r.t;me=null;view='home';render()}
 async function forgot(){const n=$('#n').value||prompt('Ton nom'),s=prompt('Ta réponse secrète'),p=prompt('Nouveau mot de passe');if(!n||!s||!p)return;const r=await fetch('/api/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,secret:s,pass:p})}).then(r=>r.json());toast(r.e||'Mot de passe changé')}
-function img(file){return new Promise(ok=>{const r=new FileReader();r.onload=()=>{if(!eco)return ok(r.result);const i=new Image();i.onload=()=>{const k=Math.min(1,eco?600:800/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',eco?.5:.6))};i.src=r.result};r.readAsDataURL(file)})}
+function img(file){return new Promise(ok=>{const r=new FileReader();r.onload=()=>{const i=new Image();i.onload=()=>{const k=Math.min(1,500/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',0.45))};i.src=r.result};r.readAsDataURL(file)})}
 const pickMedia=()=>new Promise(ok=>{const i=document.createElement('input');i.type='file';i.accept='image/*,video/*,application/pdf';i.onchange=()=>i.files[0]&&ok(i.files[0]);i.click()});
 function readFileAsDataURL(f){return new Promise(ok=>{const r=new FileReader();r.onload=()=>ok(r.result);r.readAsDataURL(f)})}
 function bellHTML(){return `<button class="bell" id="bellBtn" onclick="go('notifs')">🔔${notifCount?`<i>${notifCount}</i>`:''}</button>`}
@@ -175,7 +175,7 @@ async function home(){
   let ps=null,st=null;
   try{const cached=JSON.parse(localStorage.feedCache||'null');if(cached&&cached.length)ps=cached}catch(e){}
   if(!ps){$('#app').innerHTML=`<div class="w"><div class="topbar"><h2>Accueil</h2>${bellHTML()}</div>${skeleton()}</div>`+nav()}
-  const res=await Promise.all([api('stories').catch(()=>[]),api('feed',{type:F.type,group:F.group,saved:F.saved}).catch(()=>[]),api('leaderboard').catch(()=>[]),api('users',{q:''}).catch(()=>[])]);
+  const res=await Promise.all([api('stories').catch(()=>[]),api('feed',{type:F.type,group:F.group,saved:F.saved}).catch(()=>[]),api('leaderboard').catch(()=>[])]);
   st=res[0]||[];ps=res[1]||[]; leaderboardCache=res[2]||[];
   if(ps&&ps.length) try{localStorage.feedCache=JSON.stringify(ps)}catch(e){}
   storiesCache=st;feedCache=ps;
@@ -184,15 +184,14 @@ async function home(){
   const quickClasses=['Biologie L1','Biologie L2','Math-Physique L1','Mathématiques L1','Sciences Techniques L1','Physique-Chimie L1','Droit L1','Médecine L1'];
   return `<div class="topbar"><h2>Accueil</h2><div class="row"><button class="ghost" onclick="go('explore')">🔍 Découvrir</button>${bellHTML()}<button class="ghost" onclick="toggleTheme()">🌙</button></div></div>
   ${dailyPollHTML()}
-  ${birthdayHTML(res[3])}
   ${leaderboardHTML()}
   <div class="st"><div onclick="story()"><div class="av" style="border:3px dashed #8a4dff">+</div>Mon statut</div>${st.map((s,i)=>`<div onclick="openStory(${i})">${av(s.name,s.by,'',s.photo)}${E((s.name||'?').split(' ')[0])}</div>`).join('')}</div>
-  <div class="chips">${T.map(([v,l])=>`<button class="${F.type===v&&!F.saved?'on':''}" onclick="F.type='${v}';F.saved=0;feedLimit=10;render()">${l}</button>`).join('')}<button class="${F.saved?'on':''}" onclick="F.saved=1;render()">Favoris</button></div>
+  <div class="chips">${T.map(([v,l])=>`<button class="${F.type===v&&!F.saved?'on':''}" onclick="F.type='${v}';F.saved=0;feedLimit=5;render()">${l}</button>`).join('')}<button class="${F.saved?'on':''}" onclick="F.saved=1;render()">Favoris</button></div>
   <div class="chips"><button class="${F.group?'':'on'}" onclick="F.group='';render()">Toutes les classes</button>${quickClasses.map(c=>`<button class="${F.group===c?'on':''}" onclick="F.group='${c}';render()">${c}</button>`).join('')}<button class="${F.group===me.filiere?'on':''}" onclick="F.group='${E(me.filiere)}';render()">Ma classe : ${E(me.filiere)}</button></div>
   ${shown.map(postH).join('')||'<p class="mut card">Aucune publication ici. Utilise le bouton + pour publier.</p>'}
   ${ps.length>feedLimit?`<button class="btn" style="width:100%" onclick="feedLimit+=10;render()">Voir plus (${ps.length-feedLimit} restants)</button>`:''}`;
 }
-function refreshFeed(){feedLimit=10;localStorage.removeItem('feedCache');render();toast('Actualisé')}
+function refreshFeed(){feedLimit=5;localStorage.removeItem('feedCache');render();toast('Actualisé')}
 function downloadBtn(data,filename,label){return `<a class="ghost" href="${data}" download="${filename}" style="text-decoration:none;display:inline-block">${label}</a>`}
 function commentsHTML(p){
   const all=p.com||[]; const showAll=!!expandedCm[p.id]; const list=showAll?all:all.slice(-3);
@@ -278,7 +277,7 @@ async function changeMyFiliere(v){if(!v) return; await api('bio',{bio:me.bio||''
 async function setPhoto(){const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=()=>{const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=async()=>{const s=Math.min(im.width,im.height),c=document.createElement('canvas');c.width=c.height=256;c.getContext('2d').drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,256,256);const x=await api('photo',{img:c.toDataURL('image/jpeg',.8)});if(x.e)return toast(x.e);localStorage.pv=Date.now();me=null;toast('Photo enregistrée ✅');render()};im.src=r.result};r.readAsDataURL(f)};i.click()}
 async function edit(){const b=prompt('Ta bio',me.bio||''),f=prompt('Ta filière',me.filiere||'');if(b===null)return;await api('bio',{bio:b,filiere:f});me=null;render()}
 async function tick(){if(!tok||document.hidden)return;const p=await api('poll');if(!p||p.un===undefined)return;un=p.un;const nv=document.querySelector('nav');if(nv)nv.outerHTML=nav();loadNotifs();}
-setInterval(()=>{if(tok) fetch('/api/poll',{method:'POST',headers:{'Content-Type':'application/json','x-token':tok},body:'{}'}).catch(()=>{})},600000);
+setInterval(()=>{if(tok) fetch('/api/poll',{method:'POST',headers:{'Content-Type':'application/json','x-token':tok},body:'{}'}).catch(()=>{})},900000);
 let startY=0;document.addEventListener('touchstart',e=>{startY=e.touches[0].clientY},{passive:true});
 document.addEventListener('touchend',e=>{const dy=e.changedTouches[0].clientY-startY;if(dy>120&&window.scrollY===0&&tok&&view==='home'){refreshFeed()}},{passive:true});
 // ===== APPELS VOCAL / VIDEO - DEBUT =====
@@ -358,7 +357,7 @@ setInterval(async()=>{
     document.getElementById('incomingOv').style.display='grid';
     try{ new Audio('https://actions.google.com/sounds/v1/alarms/phone_ringtone.ogg').play(); }catch(e){}
   }
-},3000);
+},5000);
 // ===== APPELS VOCAL / VIDEO - FIN =====
 render();
 </script>
