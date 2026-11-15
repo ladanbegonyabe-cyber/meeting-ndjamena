@@ -1,8 +1,12 @@
-const CACHE = 'meeting-v1';
-const FILES = ['/', '/manifest.json', '/icon-192.png', '/icon-512.png'];
+const CACHE = 'meeting-v2';
+const SHELL = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)).catch(() => {}));
+  e.waitUntil(
+    caches.open(CACHE).then((c) =>
+      Promise.all(SHELL.map((u) => c.add(u).catch(() => {})))
+    )
+  );
   self.skipWaiting();
 });
 
@@ -16,14 +20,36 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET' || e.request.url.includes('/api/')) return;
+  const req = e.request;
+  const url = new URL(req.url);
+
+  // Ne jamais mettre en cache les envois (messages, publications, connexion)
+  if (req.method !== 'GET') return;
+
+  // Données de l'API : réseau d'abord, copie en cache si hors ligne
+  if (url.pathname.startsWith('/api/')) {
+    e.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy));
+          return res;
+        })
+        .catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // Pages et fichiers : réseau d'abord, sinon cache
   e.respondWith(
-    fetch(e.request)
+    fetch(req)
       .then((res) => {
         const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {});
+        caches.open(CACHE).then((c) => c.put(req, copy));
         return res;
       })
-      .catch(() => caches.match(e.request).then((r) => r || caches.match('/')))
+      .catch(() =>
+        caches.match(req).then((r) => r || caches.match('/index.html'))
+      )
   );
 });
