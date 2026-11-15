@@ -369,5 +369,17 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
 }
 </script>
+<div id="offline-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#f59e0b;color:#000;text-align:center;padding:6px;font-size:14px;">
+  📡 Tu es hors ligne
+</div>
+<script>
+  (function () {
+    var b = document.getElementById('offline-banner');
+    function maj() { b.style.display = navigator.onLine ? 'none' : 'block'; }
+    window.addEventListener('online', maj);
+    window.addEventListener('offline', maj);
+    maj();
+  })();
+</script>
 </body>
 </html>
